@@ -1,0 +1,34 @@
+{
+  "name": "@gzzhanghao/mocker",
+  "version": "0.2.0",
+  "description": "A simple mockup server",
+  "main": "lib",
+  "bin": {
+    "mock": "./lib/index.js"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "babel src -d lib",
+    "watch": "babel src -d lib --watch"
+  },
+  "author": "Jason <jason.daurus@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-cli": "^6.7.5",
+    "babel-plugin-transform-async-to-module-method": "^6.8.0",
+    "babel-plugin-transform-es2015-destructuring": "^6.6.5",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.7.4",
+    "babel-plugin-transform-es2015-parameters": "^6.7.0"
+  },
+  "dependencies": {
+    "bluebird": "^3.3.5",
+    "chokidar": "^1.4.3",
+    "co": "^4.6.0",
+    "node-fetch": "^1.5.3",
+    "node-forge": "^0.6.39",
+    "pac-resolver": "^1.2.6"
+  }
+}
