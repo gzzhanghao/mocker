@@ -30,5 +30,13 @@
     "node-fetch": "^1.5.3",
     "node-forge": "^0.6.39",
     "pac-resolver": "^1.2.6"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gzzhanghao/mocker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gzzhanghao/mocker/issues"
+  },
+  "homepage": "https://github.com/gzzhanghao/mocker#readme"
 }
