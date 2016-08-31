@@ -1,4 +1,6 @@
 import url from 'url'
+import http from 'http'
+import https from 'https'
 import { TLSSocket } from 'tls'
 
 export default class Request {
@@ -162,5 +164,19 @@ export default class Request {
 
   unsetHeader(name) {
     delete this.raw.headers[name]
+  }
+
+  send(opts) {
+    const remoteReq = (this.secure ? https : http).request(Object.assign({
+      host: this.host,
+      method: this.method,
+      path: this.path,
+      headers: this.headers,
+      auth: this.auth,
+    }, opts))
+
+    this.body.pipe(remoteReq)
+
+    return waitFor(remoteReq, 'response', true)
   }
 }
