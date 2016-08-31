@@ -1,8 +1,11 @@
 import url from 'url'
 import path from 'path'
 import chokidar from 'chokidar'
+
 import Request from './Request'
 import compileRules from './compileRules'
+
+import { log } from '../utils'
 
 export default mockupPath => {
   let mockup = compileRules(require(mockupPath).default)
@@ -14,21 +17,21 @@ export default mockupPath => {
     try {
       mockup = compileRules(require(mockupPath).default)
     } catch (error) {
-      console.log(error.message || error, 'mock')
+      log('mock', 'rebuild', mockupPath, error)
     }
   })
 
   return async (rawRew, res) => {
     const req = new Request(rawRew)
 
-    for (const entry of mockup) {
-      if (req.params = entry.match(req)) {
+    for (const rule of mockup) {
+      if (req.params = rule.match(req)) {
         try {
-          if (await Promise.resolve(entry.handle(req, res)) === false) {
+          if (await Promise.resolve(rule.handle(req, res)) === false) {
             return
           }
         } catch (error) {
-          console.log(error.stack || error.message || error)
+          log('mock', 'mockup', rule.name, error)
           res.writeHead(400)
           res.end()
           return

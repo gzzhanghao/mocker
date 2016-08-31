@@ -6,12 +6,12 @@ import net from 'net'
 import path from 'path'
 import http from 'http'
 import https from 'https'
-import fetch from 'node-fetch'
 
-import { waitFor } from './utils'
-import getCert from './cert/getCert'
+import getMockup from './mock'
 import getUpstream from './upstream'
-import getMockup from './mock/getMockup'
+import { waitFor, log } from './utils'
+
+import getCert from './cert/getCert'
 import { generateCA, generateHostKeys } from './cert/keygen'
 
 process.on('uncaughtException', error => {
@@ -40,15 +40,20 @@ process.on('unhandledRejection', error => {
   const netSvr = http.createServer()
   const tlsSvr = https.createServer(Object.assign({ SNICallback }, ca))
 
-  netSvr.on('connect', onConnect)
-  netSvr.on('upgrade', onUpgrade)
-  tlsSvr.on('upgrade', onUpgrade)
+  netSvr.on('connect', wrapLog('connect', onConnect))
+  netSvr.on('upgrade', wrapLog('net upgrade', onUpgrade))
+  tlsSvr.on('upgrade', wrapLog('tls upgrade', onUpgrade))
 
-  netSvr.on('request', mockup)
-  tlsSvr.on('request', mockup)
+  netSvr.on('request', wrapLog('net request', mockup))
+  tlsSvr.on('request', wrapLog('tls request', mockup))
 
-  netSvr.listen(config.port)
-  tlsSvr.listen()
+  netSvr.listen(config.port, () => {
+    console.log(`HTTP server is listening at ${config.port}`)
+  })
+
+  tlsSvr.listen(() => {
+    console.log(`HTTPS server is listening at ${tlsSvr.address().port}`)
+  })
 
   /**
    * SNICallback for tlsSvr
@@ -90,10 +95,12 @@ process.on('unhandledRejection', error => {
     const proxySocket = net.connect(proxySvr.address().port)
 
     socket.once('error', error => {
+      log('connect', 'socket', url.format(req), error)
       proxySocket.destroy()
     })
 
     proxySocket.once('error', error => {
+      log('connect', 'proxy socket', url.format(req), error)
       socket.destroy()
     })
 
@@ -133,10 +140,12 @@ process.on('unhandledRejection', error => {
     }
 
     socket.once('error', error => {
+      log('upgrade', 'socket', url.format(req), error)
       socket.destroy()
     })
 
     remoteSocket.once('error', error => {
+      log('upgrade', 'remote socket', url.format(req), error)
       remoteSocket.destroy()
     })
 
@@ -149,6 +158,15 @@ process.on('unhandledRejection', error => {
     remoteSocket.pipe(socket)
     remoteSocket.write(head)
     socket.pipe(remoteSocket)
+  }
+
+  /**
+   * Log errors for each handler
+   */
+  function wrapLog(name, handler) {
+    return (...args) => handler(...args).catch(error => {
+      log(name, 'handle', url.format(args[0]), error)
+    })
   }
 
 })()
