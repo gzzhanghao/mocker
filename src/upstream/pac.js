@@ -1,20 +1,27 @@
 import netConnect from './net'
 import httpConnect from './http'
+import socksConnect from './socks'
 
-export default async function connect(port, hostname, proxy, opts) {
-  const [proxyType, proxyHost] = (await proxy(opts.href, hostname)).split(' ')
+export default async (port, hostname, getProxy, opts) => {
+  for (const proxy of (await getProxy(opts.href, hostname)).split(';')) {
+    const [proxyType, proxyHost] = proxy.trim().split(' ')
 
-  switch (proxyType.toUpperCase()) {
+    switch (proxyType.toLowerCase()) {
 
-    case 'DIRECT':
-      return netConnect(port, hostname)
+      case 'direct':
+        return netConnect(port, hostname)
 
-    case 'HTTPS':
-    case 'PROXY':
-      const proxyProtocol = proxyType.toUpperCase() === 'HTTPS' ? 'https' : 'http'
-      return httpConnect(port, host, `${proxyProtocol}://${proxyHost}`, opts)
+      case 'https':
+      case 'proxy': {
+        const proxyProtocol = proxyType.toLowerCase() === 'http' ? 'https' : 'http'
+        return httpConnect(port, hostname, `${proxyProtocol}://${proxyHost}`, opts)
+      }
 
-    default:
-      throw new Error(`Unsupported proxy type ${proxyType}`)
+      case 'socks':
+      case 'socks5': {
+        const proxyProtocol = proxyType.toLowerCase()
+        return socksConnect(port, hostname, `${proxyProtocol}://${proxyHost}`)
+      }
+    }
   }
 }

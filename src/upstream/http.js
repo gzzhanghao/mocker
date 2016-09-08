@@ -2,7 +2,7 @@ import url from 'url'
 import http from 'http'
 import https from 'https'
 
-export default function connect(port, hostname, proxy, opts) {
+export default (port, hostname, proxy, opts) => {
   const parsedURL = url.parse(proxy)
   const secure = parsedURL.protocol === 'https:'
 

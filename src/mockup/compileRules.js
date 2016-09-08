@@ -1,8 +1,8 @@
 import compilePattern from './compilePattern'
 
 export default rules => flattenRules(rules).map(item => ({
-  name: item[0],
-  handle: typeof item[1] === 'function' ? item[1] : () => item[1],
+  pattern: item[0],
+  handle: item[1],
   match: compilePattern(item[0]),
 }))
 

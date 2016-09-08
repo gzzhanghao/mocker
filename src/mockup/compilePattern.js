@@ -95,6 +95,6 @@ function query(schema) {
 
 function method(schema) {
   if (schema == null) return () => true
-  const accepts = schema.split('|')
-  return target => accepts.indexOf(target) >= 0
+  const accepts = schema.toLowerCase().split('|')
+  return target => accepts.indexOf(target.toLowerCase()) >= 0
 }

@@ -1,15 +1,17 @@
 import url from 'url'
 import http from 'http'
 import https from 'https'
+import waitFor from 'event-to-promise'
 import { TLSSocket } from 'tls'
 
 export default class Request {
 
-  constructor(req) {
+  constructor(req, agent) {
     this.raw = this.body = req
-    this.secure = req.socket instanceof TLSSocket
+    this.protocol = req.socket instanceof TLSSocket ? 'https:' : 'http:'
     this.host = req.headers.host
     this.servername = this.hostname
+    this.agent = agent
   }
 
   set method(method) {
@@ -20,12 +22,16 @@ export default class Request {
     return this.raw.method
   }
 
-  set protocol(protocol) {
-    this.raw.protocol = protocol
+  get secure() {
+    return this.protocol === 'https:'
   }
 
-  get protocol() {
-    return this.raw.protocol
+  set secure(secure) {
+    if (secure) {
+      this.protocol = 'https:'
+    } else {
+      this.protocol = 'http:'
+    }
   }
 
   set hostname(hostname) {
@@ -166,17 +172,20 @@ export default class Request {
     delete this.raw.headers[name]
   }
 
-  send(opts) {
-    const remoteReq = (this.secure ? https : http).request(Object.assign({
-      host: this.host,
+  send() {
+    const req = (this.secure ? https : http).request({
+      hostname: this.hostname,
+      port: this.port,
       method: this.method,
       path: this.path,
       headers: this.headers,
       auth: this.auth,
-    }, opts))
+      agent: this.agent,
+      rejectUnauthorized: this.rejectUnauthorized,
+    })
 
-    this.body.pipe(remoteReq)
+    this.body.pipe(req)
 
-    return waitFor(remoteReq, 'response', true)
+    return waitFor(req, 'response')
   }
 }
