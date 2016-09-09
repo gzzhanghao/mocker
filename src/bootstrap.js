@@ -14,14 +14,6 @@ import getCert from './cert'
 import getMockup from './mockup'
 import getUpstream from './upstream'
 
-function getURL(req) {
-  return url.format({
-    protocol: req.socket instanceof tls.TLSSocket ? 'https:' : 'http:',
-    host: req.headers.host,
-    pathname: url.parse(req.url).pathname,
-  })
-}
-
 /**
  * Initialize proxy server
  */
@@ -70,10 +62,11 @@ export default async function(config) {
    */
   async function onRequest(rawReq, rawRes) {
     const startTime = Date.now()
+    const reqURL = getURL(rawReq)
 
     try {
 
-      logger.info(logger.color.cyan(rawReq.method), getURL(rawReq))
+      logger.info(logger.color.cyan(rawReq.method), reqURL)
 
       const req = new Request(rawReq, upstream.getAgent(rawReq))
       const res = { statusCode: 200, headers: {}, body: '' }
@@ -81,14 +74,14 @@ export default async function(config) {
       for (const { pattern, match, handle } of rules) {
         req.params = match(req)
         if (req.params) {
-          logger.debug(logger.color.yellow(`${req.method}:${pattern}`), req.href)
+          logger.debug(logger.color.yellow(`${req.method}:${pattern}`), reqURL)
           if (await Promise.resolve(handle(req, res)) === false) {
             break
           }
         }
       }
 
-      logger.info(logger.color.green(`${req.method}:responding`), req.href, logger.color.green(`[${Date.now() - startTime}ms]`))
+      logger.info(logger.color.green(`${req.method}:responding`), reqURL, logger.color.green(`[${Date.now() - startTime}ms]`))
       rawRes.writeHead(res.statusCode, res.headers)
 
       if (res.body instanceof stream.Readable) {
@@ -98,11 +91,11 @@ export default async function(config) {
         rawRes.end(res.body)
       }
 
-      logger.info(logger.color.green(`${req.method}:${res.statusCode}`), req.href, logger.color.green(`[${Date.now() - startTime}ms]`))
+      logger.info(logger.color.green(`${req.method}:${res.statusCode}`), reqURL, logger.color.green(`[${Date.now() - startTime}ms]`))
 
     } catch (error) {
 
-      logger.error(logger.color.red(rawReq.method), getURL(rawReq), logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
+      logger.error(logger.color.red(rawReq.method), reqURL, logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
 
       if (rawRes.writable) {
         rawRes.writeHead(500)
@@ -116,10 +109,11 @@ export default async function(config) {
    */
   async function onConnect(req, socket, head) {
     const startTime = Date.now()
+    const reqURL = getURL(req)
 
     try {
 
-      logger.info(logger.color.cyan(req.method), getURL(req))
+      logger.info(logger.color.cyan(req.method), reqURL)
 
       socket.write('HTTP/1.1 200 OK\r\n')
       if (req.headers['proxy-connection'] === 'keep-alive') {
@@ -129,7 +123,7 @@ export default async function(config) {
       socket.write('\r\n')
 
       socket.once('error', error => {
-        logger.error(logger.color.red(`${req.method}:socket`), getURL(req), '\n', error.stack)
+        logger.error(logger.color.red(`${req.method}:socket`), reqURL, '\n', error.stack)
       })
 
       if (!head || !head.length) {
@@ -148,7 +142,7 @@ export default async function(config) {
       })
 
       proxySocket.once('error', error => {
-        logger.error(logger.color.red(`${req.method}:remote`), getURL(req), '\n', error.stack)
+        logger.error(logger.color.red(`${req.method}:remote`), reqURL, '\n', error.stack)
         socket.destroy()
       })
 
@@ -162,11 +156,11 @@ export default async function(config) {
       proxySocket.write(head)
       socket.pipe(proxySocket)
 
-      logger.info(logger.color.green(req.method), getURL(req), logger.color.green(`[${Date.now() - startTime}ms]`))
+      logger.info(logger.color.green(req.method), reqURL, logger.color.green(`[${Date.now() - startTime}ms]`))
 
     } catch (error) {
 
-      logger.error(logger.color.red(req.method), getURL(req), logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
+      logger.error(logger.color.red(req.method), reqURL, logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
       socket.destroy()
     }
   }
@@ -176,10 +170,11 @@ export default async function(config) {
    */
   async function onUpgrade(req, socket, head) {
     const startTime = Date.now()
+    const reqURL = getURL(req)
 
     try {
 
-      logger.info(logger.color.cyan(req.method), getURL(req))
+      logger.info(logger.color.cyan(req.method), reqURL)
 
       let hostname = null
       let port = null
@@ -199,7 +194,7 @@ export default async function(config) {
       }
 
       socket.once('error',  error => {
-        logger.error(logger.color.red(`${req.method}:socket`), getURL(req), '\n', error.stack)
+        logger.error(logger.color.red(`${req.method}:socket`), reqURL, '\n', error.stack)
       })
 
       let remoteSocket = await upstream.connect(port, hostname, { ua: req.headers['user-agent'] })
@@ -212,7 +207,7 @@ export default async function(config) {
       })
 
       remoteSocket.once('error', error => {
-        logger.error(logger.color.red(`${req.method}:remote`), getURL(req), '\n', error.stack)
+        logger.error(logger.color.red(`${req.method}:remote`), reqURL, '\n', error.stack)
         socket.destroy()
       })
 
@@ -227,12 +222,20 @@ export default async function(config) {
 
       socket.pipe(remoteSocket)
 
-      logger.info(logger.color.green(req.method), getURL(req), logger.color.green(`[${Date.now() - startTime}ms]`))
+      logger.info(logger.color.green(req.method), reqURL, logger.color.green(`[${Date.now() - startTime}ms]`))
 
     } catch (error) {
 
-      logger.error(logger.color.red(req.method), getURL(req), logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
+      logger.error(logger.color.red(req.method), reqURL, logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
       socket.destroy()
     }
   }
+}
+
+function getURL(req) {
+  return url.format({
+    protocol: req.socket instanceof tls.TLSSocket ? 'https:' : 'http:',
+    host: req.headers.host,
+    pathname: url.parse(req.url).pathname,
+  })
 }
