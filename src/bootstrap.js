@@ -236,6 +236,6 @@ function getURL(req) {
   return url.format({
     protocol: req.socket instanceof tls.TLSSocket ? 'https:' : 'http:',
     host: req.headers.host,
-    pathname: url.parse(req.url).pathname,
+    path: url.parse(req.url).path,
   })
 }
