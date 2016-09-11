@@ -20,11 +20,11 @@ import getUpstream from './upstream'
 export default async function(config) {
 
   process.on('uncaughtException', error => {
-    logger.fatal(logger.color.red('uncaught exception'), '\n', error.stack)
+    logger.fatal(logger.red('uncaught exception'), '\n', error.stack)
   })
 
   process.on('unhandledRejection', error => {
-    logger.fatal(logger.color.red('unhandled rejection'), '\n', error.stack)
+    logger.fatal(logger.red('unhandled rejection'), '\n', error.stack)
   })
 
   const netSvr = http.createServer()
@@ -66,7 +66,7 @@ export default async function(config) {
 
     try {
 
-      logger.info(logger.color.cyan(rawReq.method), reqURL)
+      logger.info(logger.cyan(rawReq.method), reqURL)
 
       const req = new Request(rawReq, upstream.getAgent(rawReq))
       const res = { statusCode: 200, headers: {}, body: '' }
@@ -74,14 +74,14 @@ export default async function(config) {
       for (const { pattern, match, handle } of rules) {
         req.params = match(req)
         if (req.params) {
-          logger.debug(logger.color.yellow(`${req.method}:${pattern}`), reqURL)
+          logger.debug(logger.yellow(`${req.method}:${pattern}`), reqURL)
           if (await Promise.resolve(handle(req, res)) === false) {
             break
           }
         }
       }
 
-      logger.info(logger.color.green(`${req.method}:responding`), reqURL, logger.color.green(`[${Date.now() - startTime}ms]`))
+      logger.info(logger.green(`${req.method}:responding`), reqURL, logger.green(`[${Date.now() - startTime}ms]`))
       rawRes.writeHead(res.statusCode, res.headers)
 
       if (res.body instanceof stream.Readable) {
@@ -91,11 +91,11 @@ export default async function(config) {
         rawRes.end(res.body)
       }
 
-      logger.info(logger.color.green(`${req.method}:${res.statusCode}`), reqURL, logger.color.green(`[${Date.now() - startTime}ms]`))
+      logger.info(logger.green(`${req.method}:${res.statusCode}`), reqURL, logger.green(`[${Date.now() - startTime}ms]`))
 
     } catch (error) {
 
-      logger.error(logger.color.red(rawReq.method), reqURL, logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
+      logger.error(logger.red(rawReq.method), reqURL, logger.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
 
       if (rawRes.writable) {
         rawRes.writeHead(500)
@@ -113,7 +113,7 @@ export default async function(config) {
 
     try {
 
-      logger.info(logger.color.cyan(req.method), reqURL)
+      logger.info(logger.cyan(req.method), reqURL)
 
       socket.write('HTTP/1.1 200 OK\r\n')
       if (req.headers['proxy-connection'] === 'keep-alive') {
@@ -123,7 +123,7 @@ export default async function(config) {
       socket.write('\r\n')
 
       socket.once('error', error => {
-        logger.error(logger.color.red(`${req.method}:socket`), reqURL, '\n', error.stack)
+        logger.error(logger.red(`${req.method}:socket`), reqURL, '\n', error.stack)
       })
 
       if (!head || !head.length) {
@@ -142,7 +142,7 @@ export default async function(config) {
       })
 
       proxySocket.once('error', error => {
-        logger.error(logger.color.red(`${req.method}:remote`), reqURL, '\n', error.stack)
+        logger.error(logger.red(`${req.method}:remote`), reqURL, '\n', error.stack)
         socket.destroy()
       })
 
@@ -156,11 +156,11 @@ export default async function(config) {
       proxySocket.write(head)
       socket.pipe(proxySocket)
 
-      logger.info(logger.color.green(req.method), reqURL, logger.color.green(`[${Date.now() - startTime}ms]`))
+      logger.info(logger.green(req.method), reqURL, logger.green(`[${Date.now() - startTime}ms]`))
 
     } catch (error) {
 
-      logger.error(logger.color.red(req.method), reqURL, logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
+      logger.error(logger.red(req.method), reqURL, logger.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
       socket.destroy()
     }
   }
@@ -174,7 +174,7 @@ export default async function(config) {
 
     try {
 
-      logger.info(logger.color.cyan(req.method), reqURL)
+      logger.info(logger.cyan(req.method), reqURL)
 
       let hostname = null
       let port = null
@@ -194,7 +194,7 @@ export default async function(config) {
       }
 
       socket.once('error',  error => {
-        logger.error(logger.color.red(`${req.method}:socket`), reqURL, '\n', error.stack)
+        logger.error(logger.red(`${req.method}:socket`), reqURL, '\n', error.stack)
       })
 
       let remoteSocket = await upstream.connect(port, hostname, { ua: req.headers['user-agent'] })
@@ -207,7 +207,7 @@ export default async function(config) {
       })
 
       remoteSocket.once('error', error => {
-        logger.error(logger.color.red(`${req.method}:remote`), reqURL, '\n', error.stack)
+        logger.error(logger.red(`${req.method}:remote`), reqURL, '\n', error.stack)
         socket.destroy()
       })
 
@@ -222,11 +222,11 @@ export default async function(config) {
 
       socket.pipe(remoteSocket)
 
-      logger.info(logger.color.green(req.method), reqURL, logger.color.green(`[${Date.now() - startTime}ms]`))
+      logger.info(logger.green(req.method), reqURL, logger.green(`[${Date.now() - startTime}ms]`))
 
     } catch (error) {
 
-      logger.error(logger.color.red(req.method), reqURL, logger.color.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
+      logger.error(logger.red(req.method), reqURL, logger.red(`[${Date.now() - startTime}ms]`), '\n', error.stack)
       socket.destroy()
     }
   }

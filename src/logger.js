@@ -14,14 +14,13 @@ if (logLevel < 0) {
   logLevel = levels.indexOf('info')
 }
 
-const logger = {
+const logger = Object.assign({}, chalk, {
   debug: log,
   info: log,
   warn: warn,
   error: error,
   fatal: error,
-  color: chalk,
-}
+})
 
 for (let i = logLevel - 1; i >= 0; i--) {
   logger[levels[i]] = noop
