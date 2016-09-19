@@ -233,9 +233,11 @@ export default async function(config) {
 }
 
 function getURL(req) {
+  const parsedURL = url.parse(req.url)
   return url.format({
     protocol: req.socket instanceof tls.TLSSocket ? 'https:' : 'http:',
     host: req.headers.host,
-    path: url.parse(req.url).path,
+    pathname: parsedURL.pathname,
+    search: parsedURL.search
   })
 }
