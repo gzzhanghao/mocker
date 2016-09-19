@@ -14,7 +14,8 @@ if (logLevel < 0) {
   logLevel = levels.indexOf('info')
 }
 
-const logger = Object.assign({}, chalk, {
+// @todo fix me
+const logger = Object.assign(chalk, {
   debug: log,
   info: log,
   warn: warn,
