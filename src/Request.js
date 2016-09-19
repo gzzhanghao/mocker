@@ -1,8 +1,11 @@
 import url from 'url'
 import http from 'http'
 import https from 'https'
+import isIPv6 from 'is-ipv6-node'
 import waitFor from 'event-to-promise'
 import { TLSSocket } from 'tls'
+
+const numRegex = /^\d+$/
 
 export default class Request {
 
@@ -10,7 +13,6 @@ export default class Request {
     this.raw = this.body = req
     this.protocol = req.socket instanceof TLSSocket ? 'https:' : 'http:'
     this.host = req.headers.host
-    this.servername = this.hostname
     this.agent = agent
   }
 
@@ -34,25 +36,15 @@ export default class Request {
     }
   }
 
-  set hostname(hostname) {
-    const port = this.port
-    if (port) {
-      this.host = `${hostname}:${this.port}`
-    } else {
-      this.host = hostname
-    }
-  }
-
-  get hostname() {
-    return this.host.split(':')[0]
-  }
-
   get servername() {
-    return this.headers.host.split(':')[0]
+    return parseHost(this.headers.host)[0]
   }
 
   set servername(servername) {
-    const port = this.headers.host.split(':')[1]
+    const port = parseHost(this.headers.host)[1]
+    if (isIPv6(servername)) {
+      servername = `[${servername}]`
+    }
     if (port) {
       this.headers.host = `${servername}:${port}`
     } else {
@@ -60,16 +52,36 @@ export default class Request {
     }
   }
 
-  set port(port) {
-    if (!port) {
-      this.host = this.hostname
+  set hostname(hostname) {
+    const port = this.port
+    if (isIPv6(hostname)) {
+      hostname = `[${hostname}]`
+    }
+    if (port) {
+      this.host = `${hostname}:${port}`
     } else {
-      this.host = `${this.hostname}:${port}`
+      this.host = hostname
+    }
+  }
+
+  get hostname() {
+    return parseHost(this.host)[0]
+  }
+
+  set port(port) {
+    let hostname = this.hostname
+    if (isIPv6(hostname)) {
+      hostname = `[${hostname}]`
+    }
+    if (port) {
+      this.host = `${hostname}:${port}`
+    } else {
+      this.host = hostname
     }
   }
 
   get port() {
-    return this.host.split(':')[1]
+    return parseHost(this.host)[1]
   }
 
   get url() {
@@ -188,4 +200,20 @@ export default class Request {
 
     return waitFor(req, 'response')
   }
+}
+
+function parseHost(host) {
+  const lastColonIndex = host.lastIndexOf(':')
+  const maybePort = host.slice(lastColonIndex + 1)
+
+  let hostname = host
+  let port = null
+  if (numRegex.test(maybePort)) {
+    hostname = host.slice(0, lastColonIndex)
+    port = maybePort
+  }
+  if (hostname[0] === '[') {
+    hostname = hostname.slice(1, -1)
+  }
+  return [hostname, port]
 }

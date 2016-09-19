@@ -1,6 +1,6 @@
 {
   "name": "@gzzhanghao/mocker",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "description": "A simple mockup server",
   "main": "lib",
   "bin": {
@@ -21,10 +21,10 @@
     "babel-plugin-transform-async-to-module-method": "^6.8.0",
     "babel-plugin-transform-es2015-destructuring": "^6.6.5",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.7.4",
+    "babel-plugin-transform-es2015-spread": "^6.8.0",
     "babel-plugin-transform-es2015-parameters": "^6.7.0"
   },
   "dependencies": {
-    "babel-plugin-transform-es2015-spread": "^6.8.0",
     "bluebird": "^3.3.5",
     "chalk": "^1.1.3",
     "chokidar": "^1.4.3",
@@ -33,6 +33,7 @@
     "event-to-promise": "^0.7.0",
     "http-proxy-agent": "^1.0.0",
     "https-proxy-agent": "^1.0.0",
+    "is-ipv6-node": "^1.0.7",
     "is-stream": "^1.1.0",
     "node-fetch": "^1.5.3",
     "node-forge": "^0.6.39",
