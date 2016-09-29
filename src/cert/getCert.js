@@ -27,9 +27,9 @@ export default async (keysPath, generate) => {
 
   await mkdir(keysPath)
   await Promise.all([
-    writeFile(certPath, ca.cert),
-    writeFile(keyPath, ca.key),
-    writeFile(pubPath, ca.pub)
+    writeFile(certPath, ca.cert, { mode: 0o600 }),
+    writeFile(keyPath, ca.key, { mode: 0o600 }),
+    writeFile(pubPath, ca.pub, { mode: 0o600 })
   ])
 
   return ca
