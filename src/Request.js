@@ -188,6 +188,7 @@ export default class Request {
     const req = (this.secure ? https : http).request({
       hostname: this.hostname,
       port: this.port,
+      servername: this.servername,
       method: this.method,
       path: this.path,
       headers: this.headers,
