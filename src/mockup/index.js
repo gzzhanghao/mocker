@@ -1,3 +1,4 @@
+import path from 'path'
 import chokidar from 'chokidar'
 
 import logger from '../logger'
@@ -11,7 +12,7 @@ export default (mockupPath, callback) => {
 
   chokidar.watch(mockupPath, { ignored: /node_modules/ }).on('change', () => {
     logger.debug(logger.gray('reloading'))
-    for (const entry of getCacheTree(require.cache, require.resolve(mockupPath), /node_modules/)) {
+    for (const entry of getCacheTree(require.cache, path.resolve(mockupPath), /node_modules/)) {
       delete require.cache[entry]
     }
     try {
@@ -27,17 +28,10 @@ export default (mockupPath, callback) => {
  * Walk through cache tree and get dependencies of the entry
  */
 function getCacheTree(cache, entry, ignored) {
-  const items = [entry]
-  for (const item of items) {
-    if (!cache[item]) {
-      continue
+  return Object.keys(cache).filter(path => {
+    if (path.includes('node_modules')) {
+      return false
     }
-    for (const child of cache[item].children) {
-      const name = child.id || child
-      if (!ignored || !ignored.test(name)) {
-        items.push(name)
-      }
-    }
-  }
-  return items
+    return path.startsWith(entry)
+  })
 }
