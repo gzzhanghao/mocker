@@ -1,7 +1,7 @@
-import net from 'net'
+import { connect } from 'net'
 
 export default (port, hostname) => {
-  const socket = net.connect(port, hostname)
+  const socket = connect(port, hostname)
 
   return new Promise((resolve, reject) => {
 

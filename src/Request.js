@@ -1,9 +1,9 @@
-import url from 'url'
 import http from 'http'
 import https from 'https'
 import isIPv6 from 'is-ipv6-node'
 import waitFor from 'event-to-promise'
 import { TLSSocket } from 'tls'
+import { parse, format } from 'url'
 
 const numRegex = /^\d+$/
 
@@ -81,11 +81,11 @@ export default class Request {
   }
 
   get port() {
-    return parseHost(this.host)[1]
+    return parseHost(this.host)[1] || (this.secure ? 443 : 80)
   }
 
   get url() {
-    return url.parse(this.raw.url, true, true)
+    return parse(this.raw.url, true, true)
   }
 
   set path(path) {
@@ -97,7 +97,7 @@ export default class Request {
   }
 
   set pathname(pathname) {
-    this.raw.url = url.format(Object.assign(this.url, { pathname }))
+    this.raw.url = format(Object.assign(this.url, { pathname }))
   }
 
   get pathname() {
@@ -105,7 +105,7 @@ export default class Request {
   }
 
   set search(search) {
-    this.raw.url = url.format(Object.assign(this.url, { search }))
+    this.raw.url = format(Object.assign(this.url, { search }))
   }
 
   get search() {
@@ -113,7 +113,7 @@ export default class Request {
   }
 
   set query(query) {
-    this.raw.url = url.format(Object.assign(this.url, { search: undefined, query }))
+    this.raw.url = format(Object.assign(this.url, { search: undefined, query }))
   }
 
   get query() {
@@ -121,7 +121,7 @@ export default class Request {
   }
 
   set hash(hash) {
-    this.raw.url = url.format(Object.assign(this.url, { hash }))
+    this.raw.url = format(Object.assign(this.url, { hash }))
   }
 
   get hash() {
@@ -129,7 +129,7 @@ export default class Request {
   }
 
   set href(href) {
-    const com = url.parse(href)
+    const com = parse(href)
     if (com.protocol) {
       this.protocol = com.protocol
     }
@@ -145,7 +145,7 @@ export default class Request {
   }
 
   get href() {
-    return url.format(this)
+    return format(this)
   }
 
   set headers(headers) {

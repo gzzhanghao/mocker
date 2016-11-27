@@ -1,11 +1,14 @@
-import tls from 'tls'
-import path from 'path'
+import { join } from 'path'
+import { createSecureContext } from 'tls'
+
 import getCert from './getCert'
 import { generateCA, generateHostKeys } from './keygen'
 
-export default async keyPath => {
+import config from '../config'
+
+export default async () => {
   const keys = Object.create(null)
-  const ca = await getCert(keyPath, generateCA)
+  const ca = await getCert(config.keys, generateCA)
 
   return {
     cert: ca.cert,
@@ -15,10 +18,10 @@ export default async keyPath => {
         return callback(null, keys[servername])
       }
       getCert(
-        path.join(keyPath, servername),
+        join(config.keys, servername),
         () => generateHostKeys(ca, [servername])
       ).then(
-        cert => callback(null, keys[servername] = tls.createSecureContext(cert)),
+        cert => callback(null, keys[servername] = createSecureContext(cert)),
         callback
       )
     },

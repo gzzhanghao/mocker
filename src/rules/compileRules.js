@@ -1,10 +1,15 @@
 import compilePattern from './compilePattern'
 
-export default rules => flattenRules(rules).map(item => ({
-  pattern: item[0],
-  handle: item[1],
-  match: compilePattern(item[0]),
-}))
+export default function(rules) {
+  if (!Array.isArray(rules)) {
+    throw new TypeError(`Mockup rules must be an array`)
+  }
+  return flattenRules(rules).map(item => ({
+    pattern: item[0],
+    handle: item[1],
+    match: compilePattern(item[0]),
+  }))
+}
 
 function flattenRules(rules) {
   let context = ''

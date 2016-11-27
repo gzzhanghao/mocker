@@ -1,9 +1,9 @@
-import url from 'url'
 import http from 'http'
 import https from 'https'
+import { parse } from 'url'
 
 export default (port, hostname, proxy, opts) => {
-  const parsedURL = url.parse(proxy)
+  const parsedURL = parse(proxy)
   const secure = parsedURL.protocol === 'https:'
 
   const proxyReq = (secure ? https : http).request({

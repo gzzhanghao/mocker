@@ -1,36 +1,20 @@
-import chalk from 'chalk'
-import dateFormat from 'dateformat'
+import { format } from 'util'
+import termSize from 'term-size'
+import sliceAnsi from 'slice-ansi'
+import stringWidth from 'string-width'
 
-const levels = ['debug', 'info', 'warn', 'error', 'fatal', 'none']
+const ellipsis = '…'
+const ellipsisWidth = stringWidth(ellipsis)
 
-const log = createLogger('log')
-const warn = createLogger('warn')
-const error = createLogger('error')
+export default function log(...args) {
+  const columns = termSize().columns - 2
+  const text = format(...args)
 
-const noop = () => {}
+  const rows = text.split('\n')
 
-let logLevel = levels.indexOf((process.env.MOCKER_LOG || '').toLowerCase())
-if (logLevel < 0) {
-  logLevel = levels.indexOf('info')
-}
-
-// @todo fix me
-const logger = Object.assign(chalk, {
-  debug: log,
-  info: log,
-  warn: warn,
-  error: error,
-  fatal: error,
-})
-
-for (let i = logLevel - 1; i >= 0; i--) {
-  logger[levels[i]] = noop
-}
-
-function createLogger(level) {
-  return (...args) => {
-    console[level](chalk.gray(dateFormat(new Date, 'yyyymmdd HH:MM:ss')), ...args)
+  if (stringWidth(rows[0]) > columns) {
+    rows[0] = sliceAnsi(rows[0], 0, columns - ellipsisWidth) + ellipsis
   }
-}
 
-export default logger
+  console.log(rows.join('\n'))
+}

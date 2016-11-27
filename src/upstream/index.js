@@ -3,18 +3,20 @@ import { TLSSocket } from 'tls'
 import { promisify } from 'bluebird'
 import createPacResolver from 'pac-resolver'
 
-import netConnect from './net'
-import pacConnect from './pac'
-import httpConnect from './http'
-import socksConnect from './socks'
-
 import PacProxy from 'pac-proxy-agent'
 import HttpProxy from 'http-proxy-agent'
 import SocksProxy from 'socks-proxy-agent'
 import HttpsProxy from 'https-proxy-agent'
 
-export default async (upstream = 'direct') => {
-  const [upstreamType, upstreamConfig] = upstream.split(' ')
+import netConnect from './net'
+import pacConnect from './pac'
+import httpConnect from './http'
+import socksConnect from './socks'
+
+import config from '../config'
+
+export default async () => {
+  const [upstreamType, upstreamConfig] = config.upstream.split(' ')
 
   switch (upstreamType.toLowerCase()) {
 

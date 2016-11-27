@@ -1,15 +1,18 @@
 import fs from 'fs'
-import path from 'path'
+import { yellow } from 'chalk'
 import { promisify } from 'bluebird'
+import { join, dirname } from 'path'
+
+import log from '../logger'
 
 const mkdir = promisify(fs.mkdir)
 const readFile = promisify(fs.readFile)
 const writeFile = promisify(fs.writeFile)
 
-export default async (keysPath, generate) => {
-  const certPath = path.join(keysPath, 'cert.pem')
-  const keyPath = path.join(keysPath, 'key.pem')
-  const pubPath = path.join(keysPath, 'pub.pem')
+export default async (path, generate) => {
+  const certPath = join(path, 'cert.pem')
+  const keyPath = join(path, 'key.pem')
+  const pubPath = join(path, 'pub.pem')
 
   try {
 
@@ -25,7 +28,10 @@ export default async (keysPath, generate) => {
 
   const ca = generate()
 
-  await mkdir(keysPath)
+  await mkdir(path).catch(() => {
+    // @noop
+  })
+
   await Promise.all([
     writeFile(certPath, ca.cert, { mode: 0o600 }),
     writeFile(keyPath, ca.key, { mode: 0o600 }),
