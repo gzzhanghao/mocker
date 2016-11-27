@@ -150,8 +150,6 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
 
     try {
 
-      log(req.socket instanceof TLSSocket)
-
       const [hostname, parsedPort] = req.headers.host.split(':')
       const port = parsedPort || (req.socket instanceof TLSSocket ? 443 : 80)
 
