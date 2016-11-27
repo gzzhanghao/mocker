@@ -1,6 +1,6 @@
 {
   "name": "@gzzhanghao/mocker",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A simple mockup server",
   "main": "lib",
   "bin": {
@@ -37,11 +37,8 @@
     "node-forge": "^0.6.39",
     "pac-proxy-agent": "^1.0.0",
     "pac-resolver": "^1.2.6",
-    "slice-ansi": "0.0.4",
     "socks": "^1.1.9",
-    "socks-proxy-agent": "github:gzzhanghao/node-socks-proxy-agent#patch-1",
-    "string-width": "^2.0.0",
-    "term-size": "^0.1.0"
+    "socks-proxy-agent": "github:gzzhanghao/node-socks-proxy-agent#patch-1"
   },
   "repository": {
     "type": "git",
