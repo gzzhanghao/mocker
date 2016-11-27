@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import waitFor from 'event-to-promise'
 import { connect } from 'net'
 import { Readable } from 'stream'
