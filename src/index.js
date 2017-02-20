@@ -60,23 +60,30 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
     try {
 
       const req = new Request(rawReq, upstream.getAgent(rawReq))
-      const res = { statusCode: 200, headers: {}, body: '' }
+      let res = null
 
       for (const { pattern, match, handle } of rules) {
         if (!(req.params = match(req))) {
           continue
         }
-        if (await handle(req, res) === false) {
+        res = handle
+        while (typeof res === 'function') {
+          res = await res(req)
+        }
+        if (res) {
           break
         }
       }
 
       log(green(`${req.method}:res`), reqURL)
-      rawRes.writeHead(res.statusCode, res.headers)
+      rawRes.writeHead(res.statusCode || 200, res.headers)
 
       if (res.body instanceof Readable) {
         res.body.pipe(rawRes)
         await waitFor(res.body, 'end')
+      } else if (res instanceof Readable) {
+        res.pipe(rawRes)
+        await waitFor(res, 'end')
       } else {
         rawRes.end(res.body)
       }
