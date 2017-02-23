@@ -70,9 +70,13 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
         while (typeof res === 'function') {
           res = await res(req)
         }
-        if (res) {
+        if (typeof res === 'object') {
           break
         }
+      }
+
+      if (!res) {
+        res = await req.send()
       }
 
       log(green(`${req.method}:res`), reqURL)
