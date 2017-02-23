@@ -114,12 +114,12 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
 
     try {
 
-      socket.write('HTTP/1.1 200 OK\r\n')
+      let headers = 'HTTP/1.1 200 OK\r\n'
       if (req.headers['proxy-connection'] === 'keep-alive') {
-        socket.write('Proxy-Connection: keep-alive\r\n')
-        socket.write('Connection: keep-alive\r\n')
+        headers += 'Proxy-Connection: keep-alive\r\n'
+        headers += 'Connection: keep-alive\r\n'
       }
-      socket.write('\r\n')
+      socket.write(`${headers}\r\n`)
 
       if (!head || !head.length) {
         head = await waitFor(socket, 'data')
