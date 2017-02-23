@@ -92,7 +92,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
         rawRes.end(res.body)
       }
 
-      log(green(`${req.method}:${res.statusCode}`), reqURL)
+      log(green(`${req.method}:${res.statusCode || 200}`), reqURL)
 
     } catch (error) {
 
