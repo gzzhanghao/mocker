@@ -1,3 +1,4 @@
+import ip from 'ip'
 import fetch from 'node-fetch'
 import { TLSSocket } from 'tls'
 import { promisify } from 'bluebird'
@@ -35,8 +36,9 @@ export default async () => {
 
     case 'pac': {
       const pacContent = await fetch(upstreamConfig).then(res => res.text())
-      const pacResolver = promisify(createPacResolver(pacContent))
-      const agent = new PacProxy('data:text/plain;,' + encodeURIComponent(pacContent))
+      const options = { sandbox: { myIpAddress: () => ip.address() } }
+      const pacResolver = promisify(createPacResolver(pacContent, options))
+      const agent = new PacProxy('data:text/plain;,' + encodeURIComponent(pacContent), options)
 
       return {
         connect: (port, hostname, opts) => pacConnect(port, hostname, pacResolver, opts),
