@@ -5,7 +5,7 @@ import { connect } from 'net'
 import { Readable } from 'stream'
 import { TLSSocket } from 'tls'
 import { parse, format } from 'url'
-import { cyan, green, red } from 'chalk'
+import { cyan, green, red, yellow } from 'chalk'
 import { createServer as createHttpServer } from 'http'
 import { createServer as createHttpsServer } from 'https'
 
@@ -76,6 +76,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
       }
 
       if (!res) {
+        log(yellow(`${req.method}:pass`), reqURL)
         res = await req.send()
       }
 
