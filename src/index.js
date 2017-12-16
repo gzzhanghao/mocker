@@ -158,17 +158,25 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
   /**
    * On receive UPGRADE request on HTTP(s) server
    */
-  async function onUpgrade(req, socket, head) {
-    const reqURL = getURL(req)
+  async function onUpgrade(rawReq, socket, head) {
+    const reqURL = getURL(rawReq)
     log(cyan('UPGRADE'), reqURL)
 
     try {
+      const req = new Request(rawReq, upstream.getAgent(rawReq))
 
-      const [hostname, parsedPort] = req.headers.host.split(':')
-      const port = parsedPort || (req.socket instanceof TLSSocket ? 443 : 80)
+      for (const { pattern, match, handle } of rules) {
+        if (!(req.params = match(req))) {
+          continue
+        }
+        let res = handle
+        while (typeof res === 'function') {
+          res = await res(req)
+        }
+      }
 
-      let remoteSocket = await upstream.connect(port, hostname, { href: reqURL, ua: req.headers['user-agent'] })
-      if (req.socket instanceof TLSSocket) {
+      let remoteSocket = await upstream.connect(req.port, req.hostname, { href: reqURL, ua: rawReq.headers['user-agent'] })
+      if (req.secure) {
         remoteSocket = new TLSSocket(remoteSocket)
       }
 
@@ -177,9 +185,9 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
 
       remoteSocket.pipe(socket)
 
-      remoteSocket.write(`${req.method} ${req.url} HTTP/${req.httpVersion}\r\n`)
-      for (let i = 0, ii = req.rawHeaders.length; i < ii; i += 2) {
-        remoteSocket.write(`${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}\r\n`)
+      remoteSocket.write(`${rawReq.method} ${rawReq.url} HTTP/${rawReq.httpVersion}\r\n`)
+      for (let i = 0, ii = rawReq.rawHeaders.length; i < ii; i += 2) {
+        remoteSocket.write(`${rawReq.rawHeaders[i]}: ${rawReq.rawHeaders[i + 1]}\r\n`)
       }
       remoteSocket.write('\r\n')
       remoteSocket.write(head)
