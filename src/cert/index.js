@@ -13,17 +13,21 @@ export default async () => {
   return {
     cert: ca.cert,
     key: ca.key,
-    SNICallback(servername, callback) {
+    async SNICallback(servername, callback) {
       if (keys[servername]) {
         return callback(null, keys[servername])
       }
-      getCert(
-        join(config.keys, servername),
-        () => generateHostKeys(ca, [servername])
-      ).then(
-        cert => callback(null, keys[servername] = createSecureContext(cert)),
-        callback
-      )
+      const cert = forceGenerate => getCert(join(config.keys, servername), () => generateHostKeys(ca, [servername]), forceGenerate)
+      try {
+        return callback(null, createSecureContext(await cert()))
+      } catch (error) {
+        // try again with newly generated keys
+      }
+      try {
+        return callback(null, createSecureContext(await cert(true)))
+      } catch (error) {
+        callback(null, error)
+      }
     },
   }
 }
