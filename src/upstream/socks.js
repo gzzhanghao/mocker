@@ -1,6 +1,5 @@
 import dns from 'dns'
 import socks from 'socks'
-import waitFor from 'event-to-promise'
 import { parse } from 'url'
 import { promisify } from 'bluebird'
 

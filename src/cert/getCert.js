@@ -1,9 +1,6 @@
 import fs from 'fs'
-import { yellow } from 'chalk'
 import { promisify } from 'bluebird'
-import { join, dirname } from 'path'
-
-import log from '../logger'
+import { join } from 'path'
 
 const mkdir = promisify(fs.mkdir)
 const readFile = promisify(fs.readFile)
