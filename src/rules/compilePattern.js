@@ -13,11 +13,14 @@ export default schema => {
 
   return req => (
     true
+
     && matchMethod(req.method)
     && matchPort(req.port || (req.secure ? 443 : 80))
     && matchProtocol(req.protocol)
     && matchHostname(req.servername)
     && matchQuery(req.query)
+
+    // pathname must be the last one so we can return path params directly
     && matchPathname(req.pathname)
   )
 }
@@ -28,6 +31,11 @@ function protocol(schema) {
   return target => accepts.indexOf(target) >= 0
 }
 
+/**
+ * Matching hostname
+ *
+ * Supports DNS wildcard
+ */
 function hostname(schema) {
   if (schema == null) return () => true
 
@@ -49,6 +57,14 @@ function port(schema) {
   return target => accepts.indexOf(target) >= 0
 }
 
+/**
+ * Matching pathname with params
+ *
+ * eg. /pathname/with/:shortParam/::longParam
+ *
+ * :shortParam matches any characters except "/"
+ * ::longParam matches any characters
+ */
 function pathname(schema) {
   if (schema == null) return () => ({})
 
@@ -79,6 +95,13 @@ function pathname(schema) {
   }
 }
 
+/**
+ * Matching query
+ *
+ * eg. foo&bar=baz
+ *
+ * "foo" must exists, and "bar" must equals to "baz"
+ */
 function query(schema) {
   if (schema == null) return () => true
 

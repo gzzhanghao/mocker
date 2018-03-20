@@ -63,7 +63,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
       const req = new Request(rawReq, upstream)
       let res = null
 
-      for (const { pattern, match, handle } of rules) {
+      for (const { match, handle } of rules) {
         if (!(req.params = match(req))) {
           continue
         }
@@ -166,7 +166,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
     try {
       const req = new Request(rawReq, upstream)
 
-      for (const { pattern, match, handle } of rules) {
+      for (const { match, handle } of rules) {
         if (!(req.params = match(req))) {
           continue
         }
