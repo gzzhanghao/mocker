@@ -27,5 +27,11 @@ export default function(callback) {
     }
   })
 
-  return compileRules(require(config.entry).default)
+  try {
+    return compileRules(require(config.entry).default)
+  } catch (error) {
+    log(red('Compile error'), '\n', error.stack)
+  }
+
+  return []
 }
