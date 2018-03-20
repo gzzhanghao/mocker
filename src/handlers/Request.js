@@ -5,15 +5,20 @@ import waitFor from 'event-to-promise'
 import { TLSSocket } from 'tls'
 import { parse, format } from 'url'
 
+import Response from './Response'
+
 const numRegex = /^\d+$/
 
 export default class Request {
 
-  constructor(req, agent) {
-    this.raw = this.body = req
+  compress = true
+
+  constructor(req, upstream) {
     this.protocol = req.socket instanceof TLSSocket ? 'https:' : 'http:'
     this.host = req.headers.host
-    this.agent = agent
+
+    this.upstream = upstream
+    this.raw = this.body = req
   }
 
   set method(method) {
@@ -184,7 +189,7 @@ export default class Request {
     delete this.raw.headers[name]
   }
 
-  send() {
+  async send(options = {}) {
     const req = (this.secure ? https : http).request({
       hostname: this.hostname,
       port: this.port,
@@ -193,13 +198,15 @@ export default class Request {
       path: this.path,
       headers: this.headers,
       auth: this.auth,
-      agent: this.agent,
       rejectUnauthorized: this.rejectUnauthorized,
+      agent: this.upstream.getAgent(this),
     })
 
     this.body.pipe(req)
 
-    return waitFor(req, 'response')
+    return new Response(this, await waitFor(req, 'response'), {
+      passThrough: options.passThrough,
+    })
   }
 }
 

@@ -11,11 +11,12 @@ import { createServer as createHttpsServer } from 'https'
 
 import log from './logger'
 import config from './config'
-import Request from './Request'
 
 import getCert from './cert'
 import getRules from './rules'
 import getUpstream from './upstream'
+
+import Request from './handlers/Request'
 
 Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
 
@@ -59,7 +60,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
 
     try {
 
-      const req = new Request(rawReq, upstream.getAgent(rawReq))
+      const req = new Request(rawReq, upstream)
       let res = null
 
       for (const { pattern, match, handle } of rules) {
@@ -77,7 +78,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
 
       if (!res) {
         log(yellow(`${req.method}:pass`), reqURL)
-        res = await req.send()
+        res = await req.send({ passThrough: false })
       }
 
       log(green(`${req.method}:res`), reqURL)
@@ -163,7 +164,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
     log(cyan('UPGRADE'), reqURL)
 
     try {
-      const req = new Request(rawReq, upstream.getAgent(rawReq))
+      const req = new Request(rawReq, upstream)
 
       for (const { pattern, match, handle } of rules) {
         if (!(req.params = match(req))) {
@@ -175,7 +176,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
         }
       }
 
-      let remoteSocket = await upstream.connect(req.port, req.hostname, { href: reqURL, ua: rawReq.headers['user-agent'] })
+      let remoteSocket = await upstream.connect(req)
       if (req.secure) {
         remoteSocket = new TLSSocket(remoteSocket)
       }

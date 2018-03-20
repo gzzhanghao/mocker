@@ -17,7 +17,7 @@ import socksConnect from './socks'
 import config from '../config'
 
 export default async () => {
-  const [upstreamType, upstreamConfig] = config.upstream.split(' ')
+  const [upstreamType, upstreamURL] = config.upstream.split(' ')
 
   switch (upstreamType.toLowerCase()) {
 
@@ -25,37 +25,54 @@ export default async () => {
       return { connect: netConnect, getAgent() {} }
 
     case 'http': {
-      const httpProxy = new HttpProxy(upstreamConfig)
-      const httpsProxy = new HttpsProxy(upstreamConfig)
+      const httpsAgent = new HttpsProxy(upstreamURL)
+      const httpAgent = new HttpProxy(upstreamURL)
 
       return {
-        connect: (port, hostname, opts) => httpConnect(port, hostname, upstreamConfig, opts),
-        getAgent: req => (req.socket instanceof TLSSocket) ? httpsProxy : httpProxy,
+        connect(req) {
+          return httpConnect(req, upstreamURL)
+        },
+        getAgent(req) {
+          if (req.socket instanceof TLSSocket) {
+            return httpsAgent
+          }
+          return httpAgent
+        },
       }
     }
 
     case 'pac': {
-      const pacContent = await fetch(upstreamConfig).then(res => res.text())
+      const pacContent = await fetch(upstreamURL).then(res => res.text())
       const options = { sandbox: { myIpAddress: () => ip.address() } }
+
       const pacResolver = promisify(createPacResolver(pacContent, options))
       const agent = new PacProxy('data:text/plain;,' + encodeURIComponent(pacContent), options)
 
       return {
-        connect: (port, hostname, opts) => pacConnect(port, hostname, pacResolver, opts),
-        getAgent: () => agent,
+        connect(req) {
+          return pacConnect(req, pacResolver)
+        },
+        getAgent() {
+          return agent
+        },
       }
     }
 
     case 'socks': {
-      const agent = new SocksProxy(upstreamConfig)
+      const agent = new SocksProxy(upstreamURL)
 
       return {
-        connect: (port, hostname) => socksConnect(port, hostname, upstreamConfig),
-        getAgent: () => agent,
+        connect(req) {
+          return socksConnect(req, upstreamURL)
+        },
+        getAgent() {
+          return agent
+        },
       }
     }
 
-    default:
+    default: {
       throw new Error(`Unsupported upstream type ${upstreamType}`)
+    }
   }
 }

@@ -2,4 +2,7 @@
   presets: [
     ['env', { targets: { node: 'current' } }],
   ],
+  plugins: [
+    'babel-plugin-transform-class-properties',
+  ],
 }

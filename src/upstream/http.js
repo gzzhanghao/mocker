@@ -2,19 +2,19 @@ import http from 'http'
 import https from 'https'
 import { parse } from 'url'
 
-export default (port, hostname, proxy, opts) => {
-  const parsedURL = parse(proxy)
-  const secure = parsedURL.protocol === 'https:'
+export default (req, proxy) => {
+  const proxyURL = parse(proxy)
+  const secure = proxyURL.protocol === 'https:'
 
   const proxyReq = (secure ? https : http).request({
-    servername : parsedURL.hostname,
-    hostname   : parsedURL.hostname,
-    port       : parsedURL.port || (secure ? 443 : 80),
+    servername : proxyURL.hostname,
+    hostname   : proxyURL.hostname,
+    port       : proxyURL.port || (secure ? 443 : 80),
     method     : 'CONNECT',
-    path       : `${hostname}:${port}`,
+    path       : req.host,
     headers: {
-      'Host'             : parsedURL.host,
-      'Use-Agent'        : opts.ua,
+      'Host'             : proxyURL.host,
+      'Use-Agent'        : req.headers['user-agent'],
       'Proxy-Connection' : 'keep-alive',
     }
   })
@@ -37,7 +37,5 @@ export default (port, hostname, proxy, opts) => {
 
     proxyReq.abort()
     throw error
-
   })
-
 }
