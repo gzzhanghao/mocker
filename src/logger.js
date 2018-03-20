@@ -1,1 +1,1 @@
-export default console.log
+export default console.log // eslint-disable-line no-console

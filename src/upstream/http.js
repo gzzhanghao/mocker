@@ -25,7 +25,7 @@ export default (req, proxy) => {
 
     proxyReq.once('error', reject)
 
-    proxyReq.once('connect', (res, socket, head) => {
+    proxyReq.once('connect', (res, socket) => {
       resolve(socket)
     })
 

@@ -5,7 +5,7 @@ import httpConnect from './http'
 import socksConnect from './socks'
 
 export default async (req, getProxy) => {
-  for (const proxy of (await getProxy(req.href, hostname)).split(';')) {
+  for (const proxy of (await getProxy(req.href, req.hostname)).split(';')) {
     const [proxyType, proxyHost] = proxy.trim().split(' ')
     const type = proxyType.toLowerCase()
 
