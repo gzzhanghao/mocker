@@ -1,4 +1,6 @@
 # Mocker
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgzzhanghao%2Fmocker.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgzzhanghao%2Fmocker?ref=badge_shield)
+
 
 Yet another debugging proxy.
 
@@ -48,3 +50,7 @@ npm run watch
 __Tests__
 
 Tests are missing, it'll be great if you can bring it to us. :P
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgzzhanghao%2Fmocker.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgzzhanghao%2Fmocker?ref=badge_large)
