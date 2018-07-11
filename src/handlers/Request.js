@@ -190,6 +190,12 @@ export default class Request {
   }
 
   async send(options = {}) {
+    let agent
+
+    if (this.agent !== false) {
+      agent = this.agent || this.upstream.getAgent(this)
+    }
+
     const req = (this.secure ? https : http).request({
       hostname: this.hostname,
       port: this.port,
@@ -199,7 +205,7 @@ export default class Request {
       headers: this.headers,
       auth: this.auth,
       rejectUnauthorized: this.rejectUnauthorized,
-      agent: this.upstream.getAgent(this),
+      agent,
     })
 
     this.body.pipe(req)
