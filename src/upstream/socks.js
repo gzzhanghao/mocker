@@ -1,10 +1,10 @@
 import dns from 'dns'
-import socks from 'socks'
 import { parse } from 'url'
 import { promisify } from 'bluebird'
+import { SocksClient } from 'socks'
 
 const lookup = promisify(dns.lookup)
-const connect = promisify(socks.createConnection)
+const connect = promisify(SocksClient.createConnection)
 
 export default async (req, proxy) => {
   const proxyURL = parse(proxy)

@@ -19,24 +19,24 @@
   "devDependencies": {
     "babel-cli": "^6.7.5",
     "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-preset-env": "^1.6.1"
+    "babel-preset-env": "^1.7.0"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
-    "chalk": "^1.1.3",
-    "chokidar": "^1.7.0",
-    "event-to-promise": "^0.7.0",
-    "http-proxy-agent": "^2.0.0",
-    "https-proxy-agent": "^2.1.1",
+    "chalk": "^2.4.1",
+    "chokidar": "^2.0.4",
+    "event-to-promise": "^0.8.0",
+    "http-proxy-agent": "^2.1.0",
+    "https-proxy-agent": "^2.2.1",
     "ip": "^1.1.5",
     "is-ipv6-node": "^1.0.7",
     "minimist": "^1.2.0",
-    "node-fetch": "^1.7.3",
-    "node-forge": "^0.6.39",
-    "pac-proxy-agent": "^2.0.0",
+    "node-fetch": "^2.1.2",
+    "node-forge": "^0.7.5",
+    "pac-proxy-agent": "^3.0.0",
     "pac-resolver": "^3.0.0",
-    "socks": "^1.1.9",
-    "socks-proxy-agent": "^3.0.1"
+    "socks": "^2.2.1",
+    "socks-proxy-agent": "^4.0.1"
   },
   "repository": {
     "type": "git",
