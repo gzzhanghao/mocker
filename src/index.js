@@ -78,7 +78,7 @@ Promise.all([getCert(), getUpstream()]).then(([cert, upstream]) => {
 
       if (!res) {
         log(yellow(`${req.method}:pass`), reqURL)
-        res = await req.send({ passThrough: false })
+        res = await req.send({ passThrough: true })
       }
 
       log(green(`${req.method}:res`), reqURL)
