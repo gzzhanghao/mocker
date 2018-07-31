@@ -26,17 +26,13 @@
     "chalk": "^2.4.1",
     "chokidar": "^2.0.4",
     "event-to-promise": "^0.8.0",
-    "http-proxy-agent": "^2.1.0",
-    "https-proxy-agent": "^2.2.1",
     "ip": "^1.1.5",
     "is-ipv6-node": "^1.0.7",
     "minimist": "^1.2.0",
     "node-fetch": "^2.1.2",
     "node-forge": "^0.7.5",
-    "pac-proxy-agent": "^3.0.0",
     "pac-resolver": "^3.0.0",
-    "socks": "^2.2.1",
-    "socks-proxy-agent": "^4.0.1"
+    "socks": "^2.2.1"
   },
   "repository": {
     "type": "git",
