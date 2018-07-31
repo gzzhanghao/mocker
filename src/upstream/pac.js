@@ -5,26 +5,31 @@ import httpConnect from './http'
 import socksConnect from './socks'
 
 export default async (req, getProxy) => {
-  for (const proxy of (await getProxy(req.href, req.hostname)).split(';')) {
+  const proxies = await getProxy(req.href, req.hostname)
+
+  for (const proxy of proxies.split(';')) {
     const [proxyType, proxyHost] = proxy.trim().split(' ')
     const type = proxyType.toLowerCase()
 
-    switch (type) {
-
-      case 'direct': {
-        return netConnect(req)
+    try {
+      switch (type) {
+        case 'direct': {
+          return await netConnect(req)
+        }
+        case 'https':
+        case 'proxy': {
+          const proxyProtocol = type === 'https' ? 'https' : 'http'
+          return await httpConnect(req, url.format({ protocol: proxyProtocol, host: proxyHost }))
+        }
+        case 'socks':
+        case 'socks5': {
+          return await socksConnect(req, url.format({ protocol: type, host: proxyHost }))
+        }
       }
-
-      case 'https':
-      case 'proxy': {
-        const proxyProtocol = type === 'https' ? 'https' : 'http'
-        return httpConnect(req, url.format({ protocol: proxyProtocol, host: proxyHost }))
-      }
-
-      case 'socks':
-      case 'socks5': {
-        return socksConnect(req, url.format({ protocol: type, host: proxyHost }))
-      }
+    } catch (error) {
+      // noop
     }
   }
+
+  throw new Error('Failed to establish connection')
 }

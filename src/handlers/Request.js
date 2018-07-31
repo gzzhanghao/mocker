@@ -193,7 +193,7 @@ export default class Request {
     let agent
 
     if (this.agent !== false) {
-      agent = this.agent || this.upstream.getAgent(this)
+      agent = this.agent || (this.secure ? this.upstream.https : this.upstream.http)
     }
 
     const req = (this.secure ? https : http).request({

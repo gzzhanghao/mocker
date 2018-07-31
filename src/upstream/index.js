@@ -1,13 +1,10 @@
 import ip from 'ip'
+import tls from 'tls'
 import fetch from 'node-fetch'
-import { TLSSocket } from 'tls'
 import { promisify } from 'bluebird'
 import createPacResolver from 'pac-resolver'
-
-import PacProxy from 'pac-proxy-agent'
-import HttpProxy from 'http-proxy-agent'
-import SocksProxy from 'socks-proxy-agent'
-import HttpsProxy from 'https-proxy-agent'
+import { Agent as HttpAgent } from 'http'
+import { Agent as HttpsAgent } from 'https'
 
 import netConnect from './net'
 import pacConnect from './pac'
@@ -17,28 +14,25 @@ import socksConnect from './socks'
 import config from '../config'
 
 export default async () => {
+  const connect = await getConnect()
+
+  return {
+    connect,
+    http: new ConnectAgent({ connect }),
+    https: new SecureConnectAgent({ connect }),
+  }
+}
+
+async function getConnect() {
   const [upstreamType, upstreamURL] = config.upstream.split(' ')
 
   switch (upstreamType.toLowerCase()) {
 
     case 'direct':
-      return { connect: netConnect, getAgent() {} }
+      return netConnect
 
     case 'http': {
-      const httpsAgent = new HttpsProxy(upstreamURL)
-      const httpAgent = new HttpProxy(upstreamURL)
-
-      return {
-        connect(req) {
-          return httpConnect(req, upstreamURL)
-        },
-        getAgent(req) {
-          if (req.socket instanceof TLSSocket) {
-            return httpsAgent
-          }
-          return httpAgent
-        },
-      }
+      return options => httpConnect(options, upstreamURL)
     }
 
     case 'pac': {
@@ -46,33 +40,50 @@ export default async () => {
       const options = { sandbox: { myIpAddress: () => ip.address() } }
 
       const pacResolver = promisify(createPacResolver(pacContent, options))
-      const agent = new PacProxy('data:text/plain;,' + encodeURIComponent(pacContent), options)
 
-      return {
-        connect(req) {
-          return pacConnect(req, pacResolver)
-        },
-        getAgent() {
-          return agent
-        },
-      }
+      return options => pacConnect(options, pacResolver)
     }
 
     case 'socks': {
-      const agent = new SocksProxy(upstreamURL)
-
-      return {
-        connect(req) {
-          return socksConnect(req, upstreamURL)
-        },
-        getAgent() {
-          return agent
-        },
-      }
+      return options => socksConnect(options, upstreamURL)
     }
 
     default: {
       throw new Error(`Unsupported upstream type ${upstreamType}`)
     }
+  }
+}
+
+class ConnectAgent extends HttpAgent {
+
+  constructor(options) {
+    super(options)
+    this.options = options
+  }
+
+  createConnection(options, callback) {
+    this.options.connect(options).then(socket => {
+      callback(null, socket)
+    }, callback)
+  }
+}
+
+class SecureConnectAgent extends HttpsAgent {
+
+  constructor(options) {
+    super(options)
+    this.options = options
+  }
+
+  createConnection(options, callback) {
+    this.options.connect(options).then(socket => {
+      callback(null, tls.connect({
+        socket,
+        host: null,
+        port: null,
+        path: null,
+        servername: options.servername || options.host,
+      }))
+    }, callback)
   }
 }
