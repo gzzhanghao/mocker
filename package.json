@@ -26,6 +26,7 @@
     "chalk": "^2.4.1",
     "chokidar": "^2.0.4",
     "event-to-promise": "^0.8.0",
+    "http-parser-js": "^0.5.0",
     "ip": "^1.1.5",
     "is-ipv6-node": "^1.0.7",
     "minimist": "^1.2.0",

@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import './patch/http-parser'
+import './patch/dns-lookup'
+
 import waitFor from 'event-to-promise'
 import { connect } from 'net'
 import { Readable } from 'stream'
