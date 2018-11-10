@@ -2,21 +2,20 @@ import http from 'http'
 import https from 'https'
 import { parse } from 'url'
 
-export default (req, proxy) => {
-  const proxyURL = parse(proxy)
-  const secure = proxyURL.protocol === 'https:'
+export function createHTTPConnection(req, upstreamURL) {
+  const upstream = parse(upstreamURL)
+  const secure = upstream.protocol === 'https:'
 
   const proxyReq = (secure ? https : http).request({
-    servername : proxyURL.hostname,
-    hostname   : proxyURL.hostname,
-    port       : proxyURL.port || (secure ? 443 : 80),
-    method     : 'CONNECT',
-    path       : `${req.hostname}:${req.port}`,
+    servername: upstream.hostname,
+    hostname: upstream.hostname,
+    port: upstream.port || (secure ? 443 : 80),
+    method: 'CONNECT',
+    path: `${req.hostname}:${req.port}`,
     headers: {
-      'Host'             : proxyURL.host,
-      'Use-Agent'        : req.headers['user-agent'],
-      'Proxy-Connection' : 'keep-alive',
-    }
+      'host': upstream.host,
+      'use-agent': req.headers['user-agent'],
+    },
   })
 
   proxyReq.end()

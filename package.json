@@ -4,7 +4,7 @@
   "description": "A simple mockup server",
   "main": "lib",
   "bin": {
-    "mocker": "./lib/index.js"
+    "mocker": "./bin/index.js"
   },
   "files": [
     "lib"
@@ -17,23 +17,31 @@
   "author": "Jason <jason.daurus@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "babel-cli": "^6.7.5",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-preset-env": "^1.7.0"
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.5",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-export-default-from": "^7.0.0",
+    "@babel/preset-env": "^7.1.5",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.9.0"
   },
   "dependencies": {
-    "bluebird": "^3.5.1",
+    "bluebird": "^3.5.3",
     "chalk": "^2.4.1",
     "chokidar": "^2.0.4",
+    "content-type": "^1.0.4",
+    "es6-promisify": "^6.0.1",
     "event-to-promise": "^0.8.0",
     "http-parser-js": "^0.5.0",
     "ip": "^1.1.5",
     "is-ipv6-node": "^1.0.7",
     "minimist": "^1.2.0",
-    "node-fetch": "^2.1.2",
-    "node-forge": "^0.7.5",
+    "mkdirp": "^0.5.1",
+    "node-fetch": "^2.2.1",
+    "node-forge": "^0.7.6",
     "pac-resolver": "^3.0.0",
-    "socks": "^2.2.1"
+    "query-string": "^6.2.0",
+    "socks": "^2.2.2"
   },
   "repository": {
     "type": "git",

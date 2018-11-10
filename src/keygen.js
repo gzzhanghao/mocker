@@ -4,34 +4,34 @@ import { randomBytes } from 'crypto'
 const CAAttrs = [
   {
     name: 'commonName',
-    value: 'NodeMockerProxyCA'
+    value: 'NodeMockerProxyCA',
   },
   {
     name: 'countryName',
-    value: 'Internet'
+    value: 'Internet',
   },
   {
     shortName: 'ST',
-    value: 'Internet'
+    value: 'Internet',
   },
   {
     name: 'localityName',
-    value: 'Internet'
+    value: 'Internet',
   },
   {
     name: 'organizationName',
-    value: 'Node Mocker Proxy CA'
+    value: 'Node Mocker Proxy CA',
   },
   {
     shortName: 'OU',
-    value: 'CA'
-  }
+    value: 'CA',
+  },
 ]
 
 const CAExtensions = [
   {
     name: 'basicConstraints',
-    cA: true
+    cA: true,
   },
   {
     name: 'keyUsage',
@@ -39,7 +39,7 @@ const CAExtensions = [
     digitalSignature: true,
     nonRepudiation: true,
     keyEncipherment: true,
-    dataEncipherment: true
+    dataEncipherment: true,
   },
   {
     name: 'extKeyUsage',
@@ -47,7 +47,7 @@ const CAExtensions = [
     clientAuth: true,
     codeSigning: true,
     emailProtection: true,
-    timeStamping: true
+    timeStamping: true,
   },
   {
     name: 'nsCertType',
@@ -57,40 +57,40 @@ const CAExtensions = [
     objsign: true,
     sslCA: true,
     emailCA: true,
-    objCA: true
+    objCA: true,
   },
   {
-    name: 'subjectKeyIdentifier'
-  }
+    name: 'subjectKeyIdentifier',
+  },
 ]
 
 const ServerAttrs = [
   {
     name: 'countryName',
-    value: 'Internet'
+    value: 'Internet',
   },
   {
     shortName: 'ST',
-    value: 'Internet'
+    value: 'Internet',
   },
   {
     name: 'localityName',
-    value: 'Internet'
+    value: 'Internet',
   },
   {
     name: 'organizationName',
-    value: 'Node Mocker Proxy CA'
+    value: 'Node Mocker Proxy CA',
   },
   {
     shortName: 'OU',
-    value: 'Node Mocker Proxy Server Certificate'
-  }
+    value: 'Node Mocker Proxy Server Certificate',
+  },
 ]
 
 const ServerExtensions = [
   {
     name: 'basicConstraints',
-    cA: false
+    cA: false,
   },
   {
     name: 'keyUsage',
@@ -98,7 +98,7 @@ const ServerExtensions = [
     digitalSignature: true,
     nonRepudiation: false,
     keyEncipherment: true,
-    dataEncipherment: true
+    dataEncipherment: true,
   },
   {
     name: 'extKeyUsage',
@@ -106,7 +106,7 @@ const ServerExtensions = [
     clientAuth: true,
     codeSigning: false,
     emailProtection: false,
-    timeStamping: false
+    timeStamping: false,
   },
   {
     name: 'nsCertType',
@@ -116,11 +116,11 @@ const ServerExtensions = [
     objsign: false,
     sslCA: false,
     emailCA: false,
-    objCA: false
+    objCA: false,
   },
   {
-    name: 'subjectKeyIdentifier'
-  }
+    name: 'subjectKeyIdentifier',
+  },
 ]
 
 function randomSerialNumber() {
@@ -146,26 +146,25 @@ function generateCertificate({ keyLen, expires, subject, issuer, extensions, pri
   return {
     cert: pki.certificateToPem(cert),
     key: pki.privateKeyToPem(keys.privateKey),
-    pub: pki.publicKeyToPem(keys.publicKey)
   }
 }
 
-export const generateCA = () => generateCertificate({
+export const generateRootCAKey = () => generateCertificate({
   keyLen: 2048,
   expires: 10,
   subject: CAAttrs,
   issuer: CAAttrs,
-  extensions: CAExtensions
+  extensions: CAExtensions,
 })
 
-export const generateHostKeys = (ca, hosts) => generateCertificate({
+export const generateHostKey = (ca, hosts) => generateCertificate({
   keyLen: 1024,
   expires: 2,
   subject: [{ name: 'commonName', value: hosts[0] }].concat(ServerAttrs),
   issuer: pki.certificateFromPem(ca.cert).issuer.attributes,
   extensions: ServerExtensions.concat([{
     name: 'subjectAltName',
-    altNames: hosts.map(host => ({ type: 2, value: host }))
+    altNames: hosts.map(host => ({ type: 2, value: host })),
   }]),
-  privateKey: pki.privateKeyFromPem(ca.key)
+  privateKey: pki.privateKeyFromPem(ca.key),
 })

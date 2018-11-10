@@ -1,17 +1,18 @@
 module.exports = {
 
-  parser: 'babel-eslint',
+  extends: [
+    'eslint:recommended',
+  ],
 
-  parserOptions: {
-    sourceType: 'module',
-  },
+  parser: 'babel-eslint',
 
   env: {
     node: true,
     es6: true,
   },
 
-  extends: [
-    'eslint:recommended',
-  ],
+  rules: {
+    'indent': [2, 2, { SwitchCase: 1 }],
+    'comma-dangle': [2, 'always-multiline'],
+  },
 }

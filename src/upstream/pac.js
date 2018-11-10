@@ -1,29 +1,30 @@
 import url from 'url'
 
-import netConnect from './net'
-import httpConnect from './http'
-import socksConnect from './socks'
+import createTCPConnection from './tcp'
+import createHTTPConnection from './http'
+import createSocksConnect from './socks'
 
-export default async (req, getProxy) => {
+export async function createPACConnection(req, pacRequest) {
+  const getProxy = await pacRequest
   const proxies = await getProxy(req.href, req.hostname)
 
   for (const proxy of proxies.split(';')) {
-    const [proxyType, proxyHost] = proxy.trim().split(' ')
+    const [proxyType, proxyHost] = proxy.trim().split(/\s+/)
     const type = proxyType.toLowerCase()
 
     try {
       switch (type) {
         case 'direct': {
-          return await netConnect(req)
+          return await createTCPConnection(req)
         }
         case 'https':
         case 'proxy': {
           const proxyProtocol = type === 'https' ? 'https' : 'http'
-          return await httpConnect(req, url.format({ protocol: proxyProtocol, host: proxyHost }))
+          return await createHTTPConnection(req, url.format({ protocol: proxyProtocol, host: proxyHost }))
         }
         case 'socks':
         case 'socks5': {
-          return await socksConnect(req, url.format({ protocol: type, host: proxyHost }))
+          return await createSocksConnect(req, url.format({ protocol: type, host: proxyHost }))
         }
       }
     } catch (error) {

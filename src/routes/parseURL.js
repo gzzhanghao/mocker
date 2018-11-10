@@ -25,7 +25,7 @@ const path = `((${pathname}?${search}?)${hash}?)`
 
 const parser = new RegExp(`^((${protocol}?//)?(${auth}@)?${host})?${path}?$`)
 
-export default url => {
+export default function parseURL(url) {
   const [,,,protocol,,auth,username,,password,host,hostname,,port,,path,pathname,search,hash] = url.match(parser)
   return { protocol, auth, username, password, host, hostname, port, path, pathname, search, hash }
 }

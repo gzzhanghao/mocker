@@ -3,32 +3,34 @@ import { parse } from 'url'
 import { promisify } from 'bluebird'
 import { SocksClient } from 'socks'
 
-const lookup = promisify(dns.lookup)
+const resolve4 = promisify(dns.resolve4)
 const connect = promisify(SocksClient.createConnection)
 
-export default async (req, proxy) => {
-  const proxyURL = parse(proxy)
+export async function createSocksConnection(req, upstreamURL) {
+  const upstream = parse(upstreamURL)
 
   let proxyType = 5
-  if (proxyURL.protocol === 'socks4:' || proxyURL.protocol === 'socks4a:') {
+  if (upstream.protocol === 'socks4:' || upstream.protocol === 'socks4a:') {
     proxyType = 4
   }
 
   let targetHost = req.hostname
-  if (proxyURL.protocol === 'socks4:') {
-    targetHost = await lookup(req.hostname, { family: 4 })
+  if (upstream.protocol === 'socks4:') {
+    [targetHost] = await resolve4(req.hostname)
   }
 
-  return connect({
+  const { socket } = await connect({
+    command: 'connect',
     proxy: {
       type: proxyType,
-      port: proxyURL.port,
-      command: 'connect',
-      ipaddress: proxyURL.hostname,
+      port: upstream.port ? +upstream.port : 1080,
+      ipaddress: upstream.hostname,
     },
-    target: {
+    destination: {
       port: req.port,
       host: targetHost,
     },
   })
+
+  return socket
 }
