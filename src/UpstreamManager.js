@@ -1,6 +1,6 @@
 import tls from 'tls'
 import fetch from 'node-fetch'
-import { promisify } from 'bluebird'
+import { promisify } from 'es6-promisify'
 import createPacResolver from 'pac-resolver'
 import { Agent as HttpAgent } from 'http'
 import { Agent as HttpsAgent } from 'https'

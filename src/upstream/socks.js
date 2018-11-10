@@ -1,6 +1,6 @@
 import dns from 'dns'
 import { parse } from 'url'
-import { promisify } from 'bluebird'
+import { promisify } from 'es6-promisify'
 import { SocksClient } from 'socks'
 
 const resolve4 = promisify(dns.resolve4)
