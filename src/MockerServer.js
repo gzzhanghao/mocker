@@ -134,7 +134,7 @@ export default class MockerServer {
     log(cyan(rawReq.method), reqURL)
 
     try {
-      const req = new HTTPRequest(rawReq, this.upstreamManager)
+      const req = new HTTPRequest(this.upstreamManager, rawReq)
       let res = await this.requestHandler.handleRequest(req)
 
       if (!res) {
@@ -179,7 +179,7 @@ export default class MockerServer {
     log(cyan('UPGRADE'), reqURL)
 
     try {
-      const req = new UpgradeRequest(rawReq, this.upstreamManager)
+      const req = new UpgradeRequest(this.upstreamManager, rawReq, socket, head)
 
       await this.requestHandler.handleRequest(req)
 

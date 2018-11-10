@@ -6,6 +6,10 @@ const IPV6_REGEX = /^(.*?)(:(\d*))?$/
 
 export default class Request {
 
+  upstream = null
+
+  raw = null
+
   rejectUnauthorized = false
 
   agent = null
@@ -24,7 +28,7 @@ export default class Request {
 
   headers = null
 
-  constructor(req, upstream) {
+  constructor(upstream, req) {
     this.upstream = upstream
     this.raw = req
 
@@ -33,6 +37,10 @@ export default class Request {
     this.secure = req.socket.encrypted
     this.host = req.headers['host'] || ''
     this.path = req.url
+  }
+
+  get href() {
+    return '//' + this.host + this.path
   }
 
   get host() {

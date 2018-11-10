@@ -9,9 +9,21 @@ import HTTPResponse from './HTTPResponse'
 
 export default class HTTPRequest extends Request {
 
-  constructor(req, upstream) {
-    super(req, upstream)
+  constructor(upstream, req) {
+    super(upstream, req)
     Object.assign(this, HTTPBody)
+  }
+
+  get href() {
+    return this.protocol + super.href
+  }
+
+  get protocol() {
+    return this.secure ? 'https:' : 'http:'
+  }
+
+  set protocol(value) {
+    this.secure = value === 'https:'
   }
 
   async send(options = {}) {
