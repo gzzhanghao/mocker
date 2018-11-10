@@ -29,18 +29,13 @@
     "bluebird": "^3.5.3",
     "chalk": "^2.4.1",
     "chokidar": "^2.0.4",
-    "content-type": "^1.0.4",
-    "es6-promisify": "^6.0.1",
     "event-to-promise": "^0.8.0",
     "http-parser-js": "^0.5.0",
-    "ip": "^1.1.5",
-    "is-ipv6-node": "^1.0.7",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "node-fetch": "^2.2.1",
     "node-forge": "^0.7.6",
     "pac-resolver": "^3.0.0",
-    "query-string": "^6.2.0",
     "socks": "^2.2.2"
   },
   "repository": {
