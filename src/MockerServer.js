@@ -142,6 +142,10 @@ export default class MockerServer {
         res = await req.send({ consume: true })
       }
 
+      for (const transform of req.transformResponse) {
+        res = (await transform(res)) || res
+      }
+
       const statusCode = res.statusCode || res.status || 200
 
       log(green(`${req.method}:res`), reqURL)

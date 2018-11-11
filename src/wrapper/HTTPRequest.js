@@ -9,6 +9,8 @@ import HTTPResponse from './HTTPResponse'
 
 export default class HTTPRequest extends Request {
 
+  transformResponse = []
+
   constructor(upstream, req) {
     super(upstream, req)
     Object.assign(this, HTTPBody)
