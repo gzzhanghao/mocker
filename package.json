@@ -13,7 +13,7 @@
   "scripts": {
     "prepublish": "npm run build",
     "build": "babel src -d lib",
-    "watch": "babel src -d lib --watch"
+    "dev": "babel src -d lib --watch"
   },
   "author": "Jason <jason.daurus@gmail.com>",
   "license": "MIT",
