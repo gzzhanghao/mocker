@@ -54,7 +54,7 @@ function getConnectMethod(upstream) {
 class ConnectAgent extends HttpAgent {
 
   constructor(upstreamManager) {
-    super()
+    super({ keepAlive: true })
     this.upstreamManager = upstreamManager
   }
 
@@ -68,7 +68,7 @@ class ConnectAgent extends HttpAgent {
 class SecureConnectAgent extends HttpsAgent {
 
   constructor(upstreamManager) {
-    super()
+    super({ keepAlive: true })
     this.upstreamManager = upstreamManager
   }
 
