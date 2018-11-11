@@ -37,8 +37,7 @@
     "node-fetch": "^2.2.1",
     "node-forge": "^0.7.6",
     "pac-resolver": "^3.0.0",
-    "socks": "^2.2.2",
-    "ws": "^6.1.0"
+    "socks": "^2.2.2"
   },
   "repository": {
     "type": "git",

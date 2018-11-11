@@ -1,8 +1,10 @@
-import { Server, WebSocket } from 'ws'
-
 import Request from './Request'
 
 export default class UpgradeRequest extends Request {
+
+  upgrade = true
+
+  accepted = false
 
   constructor(upsteam, req, socket, head) {
     super(upsteam, req)
@@ -10,12 +12,16 @@ export default class UpgradeRequest extends Request {
     this.head = head
   }
 
+  get upgradeType() {
+    return this.headers['upgrade'].toUpperCase()
+  }
+
   get href() {
     return this.protocol + super.href
   }
 
   get protocol() {
-    if (this.headers['upgrade'].toUpperCase() === 'WEBSOCKET') {
+    if (this.upgradeType === 'WEBSOCKET') {
       return this.secure ? 'wss:' : 'ws:'
     }
     return this.secure ? 'https:' : 'http:'
@@ -25,21 +31,8 @@ export default class UpgradeRequest extends Request {
     this.secure = ['wss:', 'https:'].includes(value)
   }
 
-  send() {
-    if (this.headers['upgrade'].toUpperCase() !== 'WEBSOCKET') {
-      throw new Error(`Unsupported upgrade type '${this.headers['upgrade']}'`)
-    }
-    return new WebSocket(this.href)
-  }
-
   accept() {
-    return new Promise(resolve => {
-      if (this.headers['upgrade'].toUpperCase() !== 'WEBSOCKET') {
-        throw new Error(`Unsupported upgrade type '${this.headers['upgrade']}'`)
-      }
-      UpgradeRequest.wsServer.handleUpgrade(this.raw, this.socket, this.head, resolve)
-    })
+    this.accepted = true
+    return [this.raw, this.socket, this.head]
   }
-
-  static wsServer = new Server({ noServer: true })
 }

@@ -64,11 +64,11 @@ export default class MockerServer {
     })
 
     this.netSvr.on('clientError', error => {
-      log(red('Client error'), '\n', error.stack)
+      log(red('Client error'), '\n', error)
     })
 
     this.tlsSvr.on('tlsClientError', error => {
-      log(red('TLS client error'), '\n', error.stack)
+      log(red('TLS client error'), '\n', error)
     })
   }
 
@@ -124,7 +124,7 @@ export default class MockerServer {
 
     } catch (error) {
 
-      log(red('CONNECT'), reqURL, '\n', error.stack)
+      log(red('CONNECT'), reqURL, '\n', error)
       socket.destroy()
     }
   }
@@ -165,7 +165,7 @@ export default class MockerServer {
 
       log(green(`${req.method}:${res.statusCode || 200}`), reqURL)
     } catch (error) {
-      log(red(rawReq.method), reqURL, '\n', error.stack)
+      log(red(rawReq.method), reqURL, '\n', error)
 
       if (rawRes.writable) {
         rawRes.writeHead(500)
@@ -183,28 +183,30 @@ export default class MockerServer {
 
       await this.requestHandler.handleRequest(req)
 
-      let remoteSocket = await this.upstreamManager.connect(req)
-      if (req.secure) {
-        remoteSocket = new TLSSocket(remoteSocket)
+      if (!req.accepted) {
+        let remoteSocket = await this.upstreamManager.connect(req)
+        if (req.secure) {
+          remoteSocket = new TLSSocket(remoteSocket)
+        }
+
+        socket.once('error', () => remoteSocket.destroy())
+        remoteSocket.once('error', () => socket.destroy())
+
+        remoteSocket.pipe(socket)
+
+        remoteSocket.write(`${rawReq.method} ${rawReq.url} HTTP/${rawReq.httpVersion}\r\n`)
+        for (let i = 0, ii = rawReq.rawHeaders.length; i < ii; i += 2) {
+          remoteSocket.write(`${rawReq.rawHeaders[i]}: ${rawReq.rawHeaders[i + 1]}\r\n`)
+        }
+        remoteSocket.write('\r\n')
+        remoteSocket.write(head)
+
+        socket.pipe(remoteSocket)
       }
-
-      socket.once('error', () => remoteSocket.destroy())
-      remoteSocket.once('error', () => socket.destroy())
-
-      remoteSocket.pipe(socket)
-
-      remoteSocket.write(`${rawReq.method} ${rawReq.url} HTTP/${rawReq.httpVersion}\r\n`)
-      for (let i = 0, ii = rawReq.rawHeaders.length; i < ii; i += 2) {
-        remoteSocket.write(`${rawReq.rawHeaders[i]}: ${rawReq.rawHeaders[i + 1]}\r\n`)
-      }
-      remoteSocket.write('\r\n')
-      remoteSocket.write(head)
-
-      socket.pipe(remoteSocket)
 
       log(green('UPGRADE'), reqURL)
     } catch (error) {
-      log(red('UPGRADE'), reqURL, '\n', error.stack)
+      log(red('UPGRADE'), reqURL, '\n', error)
       socket.destroy()
     }
   }
