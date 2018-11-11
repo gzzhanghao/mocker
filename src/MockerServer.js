@@ -142,8 +142,10 @@ export default class MockerServer {
         res = await req.send({ consume: true })
       }
 
+      const statusCode = res.statusCode || res.status || 200
+
       log(green(`${req.method}:res`), reqURL)
-      rawRes.writeHead(res.statusCode || 200, res.headers)
+      rawRes.writeHead(statusCode, res.headers)
 
       let stream = null
       if (typeof res.stream === 'function') {
@@ -163,7 +165,7 @@ export default class MockerServer {
         await waitFor(stream, 'end')
       }
 
-      log(green(`${req.method}:${res.statusCode || 200}`), reqURL)
+      log(green(`${req.method}:${statusCode}`), reqURL)
     } catch (error) {
       log(red(rawReq.method), reqURL, '\n', error)
 
