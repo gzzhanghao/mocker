@@ -1,8 +1,8 @@
 import url from 'url'
 
-import createTCPConnection from './tcp'
-import createHTTPConnection from './http'
-import createSocksConnect from './socks'
+import { createTCPConnection } from './tcp'
+import { createHTTPConnection } from './http'
+import { createSocksConnect } from './socks'
 
 export async function createPACConnection(req, pacRequest) {
   const getProxy = await pacRequest
