@@ -1,8 +1,7 @@
 import qs from 'querystring'
 import net from 'net'
 import url from 'url'
-
-const IPV6_REGEX = /^(.*?)(:(\d*))?$/
+import { parseHost } from '../utils'
 
 export default class Request {
 
@@ -33,7 +32,7 @@ export default class Request {
     this.raw = req
 
     this.method = req.method.toUpperCase()
-    this.headers = req.headers
+    this.headers = { ...req.headers }
     this.secure = req.socket.encrypted
     this.host = req.headers['host'] || ''
     this.path = req.url
@@ -56,12 +55,7 @@ export default class Request {
   }
 
   set host(value) {
-    const match = value.match(IPV6_REGEX)
-    this.hostname = match[1]
-    if (match[1][0] === '[') {
-      this.hostname = match[1].slice(1, -1)
-    }
-    this.port = match[3] ? +match[3] : (this.secure ? 443 : 80)
+    [this.hostname, this.port] = parseHost(value, this.secure ? 443 : 80)
   }
 
   get path() {

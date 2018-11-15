@@ -29,8 +29,8 @@ function protocol(schema) {
   if (schema == null) {
     return () => true
   }
-  const accepts = schema.split('|')
-  return target => accepts.includes(target)
+  const accepts = schema.toUpperCase().split('|')
+  return target => accepts.includes(target.replace(/:$/, '').toUpperCase())
 }
 
 /**

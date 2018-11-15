@@ -1,7 +1,8 @@
+import url from 'url'
 import chokidar from 'chokidar'
 import { gray, red, green } from 'chalk'
 
-import { log } from './utils'
+import { log, parseHost } from './utils'
 import buildRoutes from './routes/buildRoutes'
 
 export default class RequestHandler {
@@ -24,7 +25,7 @@ export default class RequestHandler {
 
   async handleRequest(req) {
     for (const { match, handle } of this.routes) {
-      if (!(req.params = match(req))) {
+      if (!(req.params = match(getRouteParams(req.raw)))) {
         continue
       }
       let res = handle
@@ -56,4 +57,15 @@ export default class RequestHandler {
       log(red('Loading mockup rules error'), '\n', error.stack)
     }
   }
+}
+
+function getRouteParams(req) {
+  const secure = req.socket.encrypted
+  const [hostname, port] = parseHost(req.headers['host'], secure ? 443 : 80)
+  let protocol = secure ? 'https:' : 'http:'
+  if ((req.headers['upgrade'] || '').toUpperCase() === 'WEBSOCKET') {
+    protocol = secure ? 'wss:' : 'ws:'
+  }
+  const { pathname, query } = url.parse(req.url, true, true)
+  return { method: req.method, secure, protocol, hostname, port, pathname, query }
 }

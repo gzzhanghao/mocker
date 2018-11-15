@@ -10,7 +10,7 @@
  * - Pathname must have leading slash
  */
 
-const protocol = '([^\\/:]+:?)'
+const protocol = '(([^\\/:]+):?)'
 const username = '([^:@\\/\\?#]+)'
 const password = '([^@\\/\\?#]+)'
 const hostname = '([^:\\/\\?#]+)'
@@ -26,6 +26,6 @@ const path = `((${pathname}?${search}?)${hash}?)`
 const parser = new RegExp(`^((${protocol}?//)?(${auth}@)?${host})?${path}?$`)
 
 export default function parseURL(url) {
-  const [,,,protocol,,auth,username,,password,host,hostname,,port,,path,pathname,search,hash] = url.match(parser)
+  const [,,,,protocol,,auth,username,,password,host,hostname,,port,,path,pathname,search,hash] = url.match(parser)
   return { protocol, auth, username, password, host, hostname, port, path, pathname, search, hash }
 }
