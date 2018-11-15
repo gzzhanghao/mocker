@@ -24,8 +24,9 @@ export default class RequestHandler {
   }
 
   async handleRequest(req) {
+    const routeParams = getRouteParams(req.raw)
     for (const { match, handle } of this.routes) {
-      if (!(req.params = match(getRouteParams(req.raw)))) {
+      if (!(req.params = match(routeParams))) {
         continue
       }
       let res = handle
