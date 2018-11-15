@@ -1,7 +1,7 @@
 import qs from 'querystring'
-import net from 'net'
 import url from 'url'
-import { parseHost } from '../utils'
+
+import { parseHost, stringifyHost } from '../utils'
 
 export default class Request {
 
@@ -43,15 +43,7 @@ export default class Request {
   }
 
   get host() {
-    const defaultPort = this.secure ? 443 : 80
-    let hostname = this.hostname
-    if (net.isIPv6(hostname)) {
-      hostname = `[${hostname}]`
-    }
-    if (this.port === defaultPort) {
-      return hostname
-    }
-    return `${hostname}:${this.port}`
+    return stringifyHost(this.hostname, this.port, this.secure ? 443 : 80)
   }
 
   set host(value) {

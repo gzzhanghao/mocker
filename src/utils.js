@@ -1,3 +1,5 @@
+import net from 'net'
+
 const IPV6_REGEX = /^(.*?)(:(\d*))?$/
 
 export const log = console.log // eslint-disable-line no-console
@@ -10,4 +12,14 @@ export function parseHost(value, defaultPort) {
   }
   const port = match[3] ? +match[3] : defaultPort
   return [hostname, port]
+}
+
+export function stringifyHost(hostname, port, defaultPort) {
+  if (net.isIPv6(hostname)) {
+    hostname = `[${hostname}]`
+  }
+  if (port === defaultPort) {
+    return hostname
+  }
+  return `${hostname}:${port}`
 }

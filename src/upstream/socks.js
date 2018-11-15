@@ -1,33 +1,34 @@
 import dns from 'dns'
-import { parse } from 'url'
 import { promisify } from 'es6-promisify'
 import { SocksClient } from 'socks'
 
-const resolve4 = promisify(dns.resolve4)
-const connect = promisify(SocksClient.createConnection)
+import { parseHost } from '../utils'
 
-export async function createSocksConnection(req, upstreamURL) {
-  const upstream = parse(upstreamURL)
+const resolve4 = promisify(dns.resolve4)
+const createConnection = promisify(SocksClient.createConnection)
+
+export async function connect(port, hostname, upstream) {
+  const [upstreamHostname, upstreamPort] = parseHost(upstream.host, 1080)
 
   let proxyType = 5
-  if (upstream.protocol === 'socks4:' || upstream.protocol === 'socks4a:') {
+  if (upstream.type === 'socks4' || upstream.type === 'socks4a') {
     proxyType = 4
   }
 
-  let targetHost = req.hostname
-  if (upstream.protocol === 'socks4:') {
-    [targetHost] = await resolve4(req.hostname)
+  let targetHost = hostname
+  if (upstream.type === 'socks4') {
+    [targetHost] = await resolve4(hostname)
   }
 
-  const { socket } = await connect({
+  const { socket } = await createConnection({
     command: 'connect',
     proxy: {
       type: proxyType,
-      port: upstream.port ? +upstream.port : 1080,
-      ipaddress: upstream.hostname,
+      port: upstreamPort,
+      ipaddress: upstreamHostname,
     },
     destination: {
-      port: req.port,
+      port: port,
       host: targetHost,
     },
   })

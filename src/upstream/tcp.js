@@ -1,14 +1,8 @@
-import { connect } from 'net'
+import net from 'net'
+import waitFor from 'event-to-promise'
 
-export function createTCPConnection(req) {
-  const socket = connect(req.port, req.hostname)
-
-  return new Promise((resolve, reject) => {
-
-    socket.once('error', reject)
-
-    socket.once('connect', () => {
-      resolve(socket)
-    })
-  })
+export async function connect(port, hostname) {
+  const socket = net.connect(port, hostname)
+  await waitFor(socket, 'connect')
+  return socket
 }

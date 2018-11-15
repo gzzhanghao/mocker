@@ -190,7 +190,7 @@ export default class MockerServer {
       await this.requestHandler.handleRequest(req)
 
       if (!req.accepted) {
-        let remoteSocket = await this.upstreamManager.connect(req)
+        let remoteSocket = await this.upstreamManager.connect(req.port, req.hostname, req.href)
         if (req.secure) {
           remoteSocket = new TLSSocket(remoteSocket)
         }
