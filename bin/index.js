@@ -23,10 +23,13 @@ commander
   .arguments('[entry]')
   .option('-p, --port <port>', 'proxy server port', 8123)
   .option('-u, --upstream <proxy>', 'upstream options', 'direct')
+  .option('-e, --encoding [encoding]', 'http parser encoding', 'utf-8')
   .option('-k, --key <path>', 'ssl private key path', 'ssl/key.pem')
   .option('-c, --cert <path>', 'ssl certificate path', 'ssl/cert.pem')
   .action((entry, args) => {
     const { createServer } = require('..')
+
+    HTTPParser.encoding = args.encoding
 
     const server = createServer({
       cert: path.resolve(args.cert),
