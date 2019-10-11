@@ -151,7 +151,7 @@ function generateCertificate({ keyLen, expires, subject, issuer, extensions, pri
 
 export const generateRootCAKey = () => generateCertificate({
   keyLen: 2048,
-  expires: 10,
+  expires: 2,
   subject: CAAttrs,
   issuer: CAAttrs,
   extensions: CAExtensions,
