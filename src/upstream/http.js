@@ -3,9 +3,14 @@ import https from 'https'
 
 import { parseHost } from '../utils'
 
-export function connect(port, hostname, upstream) {
+export function connect(port, hostname, upstream, ua) {
   const secure = upstream.type === 'https'
   const [upstreamHostname, upstreamPort] = parseHost(upstream.host, secure ? 443 : 80)
+
+  const headers = { host: `${hostname}:${port}` }
+  if (ua) {
+    headers['user-agent'] = ua
+  }
 
   const proxyReq = (secure ? https : http).request({
     servername: upstreamHostname,
@@ -13,7 +18,7 @@ export function connect(port, hostname, upstream) {
     port: upstreamPort,
     method: 'CONNECT',
     path: `${hostname}:${port}`,
-    headers: { host: upstream.host },
+    headers,
   })
 
   proxyReq.end()

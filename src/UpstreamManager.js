@@ -38,10 +38,10 @@ export default class UpstreamManager {
     this.httpsAgent = new SecureConnectAgent(this)
   }
 
-  async connect(port, hostname, href) {
+  async connect(port, hostname, href, ua) {
     for (const upstream of await this.resolveProxies(href, hostname)) {
       try {
-        return await UPSTREAM_MAP[upstream.type].connect(port, hostname, upstream)
+        return await UPSTREAM_MAP[upstream.type].connect(port, hostname, upstream, ua)
       } catch (error) {
         // noop
       }
@@ -91,7 +91,8 @@ class ConnectAgent extends HttpAgent {
   createConnection(options, callback) {
     const { hostname, port } = options
     const href = getHref(options)
-    this.upstream.connect(port, hostname, href).then(socket => {
+    const ua = options.headers['user-agent']
+    this.upstream.connect(port, hostname, href, ua).then(socket => {
       callback(null, socket)
     }, callback)
   }
@@ -107,7 +108,8 @@ class SecureConnectAgent extends HttpsAgent {
   createConnection(options, callback) {
     const { hostname, port } = options
     const href = getHref(options, true)
-    this.upstream.connect(port, hostname, href).then(socket => {
+    const ua = options.headers['user-agent']
+    this.upstream.connect(port, hostname, href, ua).then(socket => {
       callback(null, tls.connect({
         socket,
         servername: options.servername || options.host,
