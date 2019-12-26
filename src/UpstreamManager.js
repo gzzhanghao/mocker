@@ -111,6 +111,7 @@ class SecureConnectAgent extends HttpsAgent {
       callback(null, tls.connect({
         socket,
         servername: options.servername || options.host,
+        ...options,
       }))
     }, callback)
   }
