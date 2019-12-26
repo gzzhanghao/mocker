@@ -8,13 +8,11 @@ export default function buildPattern(schema) {
   const matchHostname = hostname(components.hostname)
   const matchPort = port(components.port)
   const matchQuery = query(components.search && parseQuery(components.search.slice(1)))
-  const matchMethod = method(components.hash && components.hash.slice(1))
   const matchPathname = pathname(components.pathname)
 
   return req => (
     true
 
-    && matchMethod(req.method)
     && matchPort(req.port || (req.secure ? 443 : 80))
     && matchProtocol(req.protocol)
     && matchHostname(req.hostname)
@@ -130,12 +128,4 @@ function query(schema) {
     }
     return true
   }
-}
-
-function method(schema) {
-  if (schema == null) {
-    return () => true
-  }
-  const accepts = schema.toUpperCase().split('|')
-  return target => accepts.includes(target.toUpperCase())
 }
