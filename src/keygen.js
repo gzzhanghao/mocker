@@ -158,7 +158,7 @@ export const generateRootCAKey = () => generateCertificate({
 })
 
 export const generateHostKey = (ca, hosts) => generateCertificate({
-  keyLen: 1024,
+  keyLen: 2048,
   expires: 2,
   subject: [{ name: 'commonName', value: hosts[0] }].concat(ServerAttrs),
   issuer: pki.certificateFromPem(ca.cert).issuer.attributes,
