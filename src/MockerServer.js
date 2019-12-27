@@ -4,7 +4,6 @@ import url from 'url'
 import path from 'path'
 import http from 'http'
 import https from 'https'
-import mkdirp from 'mkdirp'
 import { Readable } from 'stream'
 import tls, { TLSSocket } from 'tls'
 import waitFor from 'event-to-promise'
@@ -72,21 +71,26 @@ export default class MockerServer {
     })
   }
 
-  SNICallback(servername, callback) {
-    try {
-      if (!this.hostKeys[servername]) {
-        this.hostKeys[servername] = tls.createSecureContext(generateHostKey(this.rootCAKey, [servername]))
-      }
-      return callback(null, this.hostKeys[servername])
-    } catch (error) {
-      return callback(error)
-    }
-  }
-
   listen(port) {
     this.requestHandler.listen()
     this.tlsSvr.listen()
     this.netSvr.listen(port)
+  }
+
+  SNICallback(servername, callback) {
+    if (!this.hostKeys[servername]) {
+      this.hostKeys[servername] = generateHostKey(this.rootCAKey, [servername])
+        .then(res => {
+          return tls.createSecureContext(res)
+        })
+        .catch(error => {
+          this.hostKeys[servername] = null
+          throw error
+        })
+    }
+    this.hostKeys[servername].then(res => {
+      callback(null, res)
+    }, callback)
   }
 
   async onConnect(req, socket, head) {
@@ -232,19 +236,15 @@ function getRootCAKey(options) {
     // noop
   }
   const ca = generateRootCAKey()
-  tryCall(() => mkdirp.sync(path.dirname(paths.cert)))
-  tryCall(() => mkdirp.sync(path.dirname(paths.key)))
-  tryCall(() => fs.writeFileSync(paths.cert, ca.cert, { mode: 0o600 }))
-  tryCall(() => fs.writeFileSync(paths.key, ca.key, { mode: 0o600 }))
-  return ca
-}
-
-function tryCall(cb) {
   try {
-    cb()
+    fs.mkdirSync(path.dirname(paths.cert), { mode: 0o600, recursive: true })
+    fs.mkdirSync(path.dirname(paths.key), { mode: 0o600, recursive: true })
+    fs.writeFileSync(paths.cert, ca.cert, { mode: 0o600 })
+    fs.writeFileSync(paths.key, ca.key, { mode: 0o600 })
   } catch (error) {
     // noop
   }
+  return ca
 }
 
 function getURL(req) {

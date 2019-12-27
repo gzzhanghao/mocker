@@ -68,5 +68,5 @@ function getRouteParams(req) {
     protocol = secure ? 'wss:' : 'ws:'
   }
   const { pathname, query } = url.parse(req.url, true, true)
-  return { method: req.method, secure, protocol, hostname, port, pathname, query }
+  return { protocol, hostname, port, pathname, query }
 }

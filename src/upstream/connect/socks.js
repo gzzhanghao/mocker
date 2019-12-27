@@ -1,8 +1,8 @@
 import dns from 'dns'
-import { promisify } from 'es6-promisify'
+import { promisify } from 'util'
 import { SocksClient } from 'socks'
 
-import { parseHost } from '../utils'
+import { parseHost } from '../../utils'
 
 const resolve4 = promisify(dns.resolve4)
 const createConnection = promisify(SocksClient.createConnection)

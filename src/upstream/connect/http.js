@@ -1,13 +1,14 @@
 import http from 'http'
 import https from 'https'
 
-import { parseHost } from '../utils'
+import { parseHost, stringifyHost } from '../../utils'
 
 export function connect(port, hostname, upstream, ua) {
   const secure = upstream.type === 'https'
   const [upstreamHostname, upstreamPort] = parseHost(upstream.host, secure ? 443 : 80)
 
-  const headers = { host: `${hostname}:${port}` }
+  const host = stringifyHost(hostname, port)
+  const headers = { host }
   if (ua) {
     headers['user-agent'] = ua
   }
@@ -17,7 +18,7 @@ export function connect(port, hostname, upstream, ua) {
     hostname: upstreamHostname,
     port: upstreamPort,
     method: 'CONNECT',
-    path: `${hostname}:${port}`,
+    path: host,
     headers,
   })
 

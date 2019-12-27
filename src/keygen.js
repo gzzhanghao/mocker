@@ -1,5 +1,8 @@
+import { promisify } from 'util'
 import { pki, md } from 'node-forge'
 import { randomBytes } from 'crypto'
+
+const generateKeyPair = promisify(pki.rsa.generateKeyPair)
 
 const CAAttrs = [
   {
@@ -127,8 +130,7 @@ function randomSerialNumber() {
   return randomBytes(16).toString('hex')
 }
 
-function generateCertificate({ keyLen, expires, subject, issuer, extensions, privateKey }) {
-  const keys = pki.rsa.generateKeyPair(keyLen)
+function generateCertificate({ keys, expires, subject, issuer, extensions, privateKey }) {
   const cert = pki.createCertificate()
 
   cert.publicKey = keys.publicKey
@@ -149,22 +151,27 @@ function generateCertificate({ keyLen, expires, subject, issuer, extensions, pri
   }
 }
 
-export const generateRootCAKey = () => generateCertificate({
-  keyLen: 2048,
-  expires: 2,
-  subject: CAAttrs,
-  issuer: CAAttrs,
-  extensions: CAExtensions,
-})
+export function generateRootCAKey() {
+  return generateCertificate({
+    keys: pki.rsa.generateKeyPairSync(2048),
+    keyLen: 2048,
+    expires: 2,
+    subject: CAAttrs,
+    issuer: CAAttrs,
+    extensions: CAExtensions,
+  })
+}
 
-export const generateHostKey = (ca, hosts) => generateCertificate({
-  keyLen: 2048,
-  expires: 2,
-  subject: [{ name: 'commonName', value: hosts[0] }].concat(ServerAttrs),
-  issuer: pki.certificateFromPem(ca.cert).issuer.attributes,
-  extensions: ServerExtensions.concat([{
-    name: 'subjectAltName',
-    altNames: hosts.map(host => ({ type: 2, value: host })),
-  }]),
-  privateKey: pki.privateKeyFromPem(ca.key),
-})
+export async function generateHostKey(ca, hosts) {
+  return generateCertificate({
+    keys: await generateKeyPair(2048),
+    expires: 2,
+    subject: [{ name: 'commonName', value: hosts[0] }].concat(ServerAttrs),
+    issuer: pki.certificateFromPem(ca.cert).issuer.attributes,
+    extensions: ServerExtensions.concat([{
+      name: 'subjectAltName',
+      altNames: hosts.map(host => ({ type: 2, value: host })),
+    }]),
+    privateKey: pki.privateKeyFromPem(ca.key),
+  })
+}

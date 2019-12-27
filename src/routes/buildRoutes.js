@@ -1,4 +1,4 @@
-import buildPattern from './buildPattern'
+import createMatcher from './matcher'
 
 /**
  * Transform mockup rules into flat route array
@@ -8,11 +8,11 @@ import buildPattern from './buildPattern'
  * eg.
  *
  * ['//mocker.io', [
- *   rootHandler,
- *   '/foo',
- *   '/bar',
- *   setHost,
- *   json({}),
+ *     rootHandler,
+ *     '/foo',
+ *     '/bar',
+ *     setHost,
+ *     json({}),
  * ]]
  *
  * =>
@@ -20,30 +20,30 @@ import buildPattern from './buildPattern'
  * [{
  *   pattern: '//mocker.io',
  *   handle: rootHandler,
- *   match: buildPattern('//mocker.io')
+ *   match: createMatcher('//mocker.io')
  * }, {
  *   pattern: '//mocker.io/foo',
  *   handle: setHost,
- *   match: buildPattern('//mocker.io/foo')
+ *   match: createMatcher('//mocker.io/foo')
  * }, {
  *   pattern: '//mocker.io/foo',
  *   handle: json({}),
- *   match: buildPattern('//mocker.io/foo')
+ *   match: createMatcher('//mocker.io/foo')
  * }, {
  *   pattern: '//mocker.io/bar',
  *   handle: setHost,
- *   match: buildPattern('//mocker.io/bar')
+ *   match: createMatcher('//mocker.io/bar')
  * }, {
  *   pattern: '//mocker.io/bar',
  *   handle: json({}),
- *   match: buildPattern('//mocker.io/bar')
+ *   match: createMatcher('//mocker.io/bar')
  * }]
  */
 export default function buildRoutes(routes) {
   return flattenRoutes(routes).map(item => ({
     pattern: item[0],
     handle: item[1],
-    match: buildPattern(item[0]),
+    match: createMatcher(item[0]),
   }))
 }
 

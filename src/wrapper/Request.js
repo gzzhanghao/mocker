@@ -47,7 +47,14 @@ export default class Request {
   }
 
   set host(value) {
-    [this.hostname, this.port] = parseHost(value, this.secure ? 443 : 80)
+    const defaultPort = this.secure ? 443 : 80
+    const [hostname, port] = parseHost(value, defaultPort)
+    this.hostname = hostname
+    if (port === defaultPort) {
+      this.port = null
+    } else {
+      this.port = port
+    }
   }
 
   get path() {
