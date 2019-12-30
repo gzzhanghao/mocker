@@ -2,8 +2,15 @@ import waitFor from 'event-to-promise'
 
 import StreamBuffer from './StreamBuffer'
 
+/**
+ * @typedef {{ decode?: boolean, consume?: boolean }} StreamOptions
+ */
+
 export default {
 
+  /**
+   * @param {StreamOptions} options
+   */
   stream(options = {}) {
     const buffer = StreamBuffer.get(this.raw)
     if (options.decode) {
@@ -12,7 +19,10 @@ export default {
     return buffer.getStream(options.consume)
   },
 
-  async buffer(options) {
+  /**
+   * @param {StreamOptions} options
+   */
+  async buffer(options = {}) {
     const stream = this.stream(options)
     const chunks = []
     stream.on('data', chunk => {
@@ -22,11 +32,17 @@ export default {
     return Buffer.concat(chunks)
   },
 
-  async text(options) {
+  /**
+   * @param {StreamOptions} options
+   */
+  async text(options = {}) {
     return (await this.buffer({ ...options, decode: true })).toString()
   },
 
-  async json(options) {
+  /**
+   * @param {StreamOptions} options
+   */
+  async json(options = {}) {
     return JSON.parse(await this.text(options) )
   },
 }

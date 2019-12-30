@@ -1,52 +1,81 @@
-import fs from 'fs'
-import net from 'net'
-import url from 'url'
-import path from 'path'
 import http from 'http'
 import https from 'https'
+import net from 'net'
 import { Readable } from 'stream'
 import tls, { TLSSocket } from 'tls'
+import url from 'url'
+import chalk from 'chalk'
 import waitFor from 'event-to-promise'
-import { cyan, green, red, yellow } from 'chalk'
 
+import { generateHostKey } from './keygen'
 import { log } from './utils'
-import { generateRootCAKey, generateHostKey } from './keygen'
-
-import RequestHandler from './RequestHandler'
-import UpstreamManager from './UpstreamManager'
-
 import HTTPRequest from './wrapper/HTTPRequest'
 import UpgradeRequest from './wrapper/UpgradeRequest'
 
 export default class MockerServer {
 
-  options = null
+  /**
+   * @typedef {import('@/router').default} Router
+   * @typedef {import('@/upstream').default} Upstream
+   * @typedef {{ key: string, cert: string }} RootCA
+   */
 
-  rootCAKey = null
+  /**
+   * @private
+   *
+   * @type {RootCA}
+   */
+  rootCA
 
-  hostKeys = null
+  /**
+   * @private
+   *
+   * @type {Router}
+   */
+  router
 
-  netSvr = null
+  /**
+   * @private
+   *
+   * @type {Upstream}
+   */
+  upstream
 
-  tlsSvr = null
+  /**
+   * @private
+   *
+   * @type {{ [key: string]: Promise<tls.SecureContext> | null }}
+   */
+  hostKeys
 
-  requestHandler = null
+  /**
+   * @private
+   *
+   * @type {http.Server}
+   */
+  netSvr
 
-  upstreamManager = null
+  /**
+   * @private
+   *
+   * @type {https.Server}
+   */
+  tlsSvr
 
+  /**
+   * @param {{ upstream: Upstream, router: Router, rootCA: RootCA }} options
+   */
   constructor(options) {
-    this.options = options
-
-    this.upstreamManager = new UpstreamManager(options)
-    this.requestHandler = new RequestHandler(options)
+    this.upstream = options.upstream
+    this.router = options.router
 
     this.hostKeys = Object.create(null)
-    this.rootCAKey = getRootCAKey(options)
+    this.rootCA = options.rootCA
 
     this.netSvr = http.createServer()
     this.tlsSvr = https.createServer({
-      cert: this.rootCAKey.cert,
-      key: this.rootCAKey.key,
+      cert: this.rootCA.cert,
+      key: this.rootCA.key,
       SNICallback: this.SNICallback.bind(this),
     })
 
@@ -59,27 +88,35 @@ export default class MockerServer {
     this.tlsSvr.on('request', this.onRequest.bind(this))
 
     this.netSvr.on('listening', () => {
-      log(green(`Server listening at ${this.netSvr.address().port}`))
+      log(chalk.green(`Server listening at ${this.netSvr.address().port}`))
     })
 
     this.netSvr.on('clientError', error => {
-      log(red('Client error'), '\n', error)
+      log(chalk.red('Client error'), '\n', error)
     })
 
     this.tlsSvr.on('tlsClientError', error => {
-      log(red('TLS client error'), '\n', error)
+      log(chalk.red('TLS client error'), '\n', error)
     })
   }
 
+  /**
+   * @param {number} port
+   */
   listen(port) {
-    this.requestHandler.listen()
     this.tlsSvr.listen()
     this.netSvr.listen(port)
   }
 
+  /**
+   * @private
+   *
+   * @param {string} servername
+   * @param {Function} callback
+   */
   SNICallback(servername, callback) {
     if (!this.hostKeys[servername]) {
-      this.hostKeys[servername] = generateHostKey(this.rootCAKey, [servername])
+      this.hostKeys[servername] = generateHostKey(this.rootCA, [servername])
         .then(res => {
           return tls.createSecureContext(res)
         })
@@ -93,9 +130,16 @@ export default class MockerServer {
     }, callback)
   }
 
+  /**
+   * @private
+   *
+   * @param {http.IncomingMessage} req
+   * @param {net.Socket} socket
+   * @param {Buffer} head
+   */
   async onConnect(req, socket, head) {
-    const reqURL = getURL(req)
-    log(cyan('CONNECT'), reqURL)
+    const reqURL = req.url
+    log(chalk.cyan('CONNECT'), reqURL)
 
     try {
       socket.write(`HTTP/1.1 200 OK\r\n\r\n`)
@@ -124,25 +168,31 @@ export default class MockerServer {
       proxySocket.write(head)
       socket.pipe(proxySocket)
 
-      log(green('CONNECT'), reqURL)
+      log(chalk.green('CONNECT'), reqURL)
 
     } catch (error) {
 
-      log(red('CONNECT'), reqURL, '\n', error)
+      log(chalk.red('CONNECT'), reqURL, '\n', error)
       socket.destroy()
     }
   }
 
+  /**
+   * @private
+   *
+   * @param {http.IncomingMessage} rawReq
+   * @param {http.ServerResponse} rawRes
+   */
   async onRequest(rawReq, rawRes) {
     const reqURL = getURL(rawReq)
-    log(cyan(rawReq.method), reqURL)
+    log(chalk.cyan(rawReq.method), reqURL)
 
     try {
-      const req = new HTTPRequest(this.upstreamManager, rawReq)
-      let res = await this.requestHandler.handleRequest(req)
+      const req = new HTTPRequest(this.upstream, rawReq)
+      let res = await this.router.handleRequest(req)
 
       if (!res) {
-        log(yellow(`${req.method}:pass`), reqURL)
+        log(chalk.yellow(`${req.method}:pass`), reqURL)
         res = await req.send({ consume: true })
       }
 
@@ -152,7 +202,7 @@ export default class MockerServer {
 
       const statusCode = res.statusCode || res.status || 200
 
-      log(green(`${req.method}:res`), reqURL)
+      log(chalk.green(`${req.method}:res`), reqURL)
       rawRes.writeHead(statusCode, res.headers)
 
       let stream = null
@@ -173,9 +223,9 @@ export default class MockerServer {
         await waitFor(stream, 'end')
       }
 
-      log(green(`${req.method}:${statusCode}`), reqURL)
+      log(chalk.green(`${req.method}:${statusCode}`), reqURL)
     } catch (error) {
-      log(red(rawReq.method), reqURL, '\n', error)
+      log(chalk.red(rawReq.method), reqURL, '\n', error)
 
       if (rawRes.writable) {
         rawRes.writeHead(500)
@@ -184,74 +234,70 @@ export default class MockerServer {
     }
   }
 
+  /**
+   * @private
+   *
+   * @param {http.IncomingMessage} rawReq
+   * @param {net.Socket} socket
+   * @param {Buffer} head
+   */
   async onUpgrade(rawReq, socket, head) {
     const reqURL = getURL(rawReq)
-    log(cyan('UPGRADE'), reqURL)
+    log(chalk.cyan('UPGRADE'), reqURL)
 
     try {
-      const req = new UpgradeRequest(this.upstreamManager, rawReq, socket, head)
+      const req = new UpgradeRequest(rawReq, socket, head)
 
-      await this.requestHandler.handleRequest(req)
+      await this.router.handleRequest(req)
 
-      if (!req.accepted) {
-        let remoteSocket = await this.upstreamManager.connect(req.port, req.hostname, req.href, req.headers['user-agent'])
-        if (req.secure) {
-          remoteSocket = new TLSSocket(remoteSocket)
-        }
-
-        socket.once('error', () => remoteSocket.destroy())
-        remoteSocket.once('error', () => socket.destroy())
-
-        remoteSocket.pipe(socket)
-
-        remoteSocket.write(`${rawReq.method} ${rawReq.url} HTTP/${rawReq.httpVersion}\r\n`)
-        for (let i = 0, ii = rawReq.rawHeaders.length; i < ii; i += 2) {
-          remoteSocket.write(`${rawReq.rawHeaders[i]}: ${rawReq.rawHeaders[i + 1]}\r\n`)
-        }
-        remoteSocket.write('\r\n')
-        remoteSocket.write(head)
-
-        socket.pipe(remoteSocket)
+      if (req.accepted) {
+        log(chalk.blue('UPGRADE'), reqURL)
+        return
       }
 
-      log(green('UPGRADE'), reqURL)
+      let remoteSocket = await this.upstream.connect({
+        port: req.port,
+        hostname: req.hostname,
+        href: req.href,
+        headers: {
+          'user-agent': req.headers['user-agent'],
+        },
+      })
+
+      if (req.secure) {
+        remoteSocket = new TLSSocket(remoteSocket)
+      }
+
+      socket.once('error', () => remoteSocket.destroy())
+      remoteSocket.once('error', () => socket.destroy())
+
+      remoteSocket.pipe(socket)
+
+      remoteSocket.write(`${rawReq.method} ${rawReq.url} HTTP/${rawReq.httpVersion}\r\n`)
+      for (let i = 0, ii = rawReq.rawHeaders.length; i < ii; i += 2) {
+        remoteSocket.write(`${rawReq.rawHeaders[i]}: ${rawReq.rawHeaders[i + 1]}\r\n`)
+      }
+      remoteSocket.write('\r\n')
+      remoteSocket.write(head)
+
+      socket.pipe(remoteSocket)
+
+      log(chalk.green('UPGRADE'), reqURL)
     } catch (error) {
-      log(red('UPGRADE'), reqURL, '\n', error)
+      log(chalk.red('UPGRADE'), reqURL, '\n', error)
       socket.destroy()
     }
   }
 }
 
-function getRootCAKey(options) {
-  const paths = {
-    cert: options.cert,
-    key: options.key,
-  }
-  try {
-    return {
-      cert: fs.readFileSync(paths.cert, 'utf-8'),
-      key: fs.readFileSync(paths.key, 'utf-8'),
-    }
-  } catch (error) {
-    // noop
-  }
-  const ca = generateRootCAKey()
-  try {
-    fs.mkdirSync(path.dirname(paths.cert), { mode: 0o600, recursive: true })
-    fs.mkdirSync(path.dirname(paths.key), { mode: 0o600, recursive: true })
-    fs.writeFileSync(paths.cert, ca.cert, { mode: 0o600 })
-    fs.writeFileSync(paths.key, ca.key, { mode: 0o600 })
-  } catch (error) {
-    // noop
-  }
-  return ca
-}
-
+/**
+ * @param {http.IncomingMessage} req
+ */
 function getURL(req) {
   const parsedURL = url.parse(req.url)
   return url.format({
     protocol: req.socket.encrypted ? 'https:' : 'http:',
-    host: req.headers.host,
+    host: parsedURL.host || req.headers.host,
     pathname: parsedURL.pathname,
     search: parsedURL.search,
   })

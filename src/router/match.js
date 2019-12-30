@@ -1,36 +1,47 @@
 import qs from 'querystring'
-import parsePattern from './parsePattern'
 
-export default function createMatcher(schema) {
-  const patterns = parsePattern(schema)
+import parseURL from './parseURL'
 
-  const matchProtocol = patterns.protocol && createProtocolMatcher(patterns.protocol)
-  const matchHostname = patterns.hostname && createHostnameMatcher(patterns.hostname)
-  const matchPort = patterns.port && createPortMatcher(patterns.port)
-  const matchQuery = patterns.search && createQueryMatcher(patterns.search)
-  const matchPathname = patterns.pathname && createPathnameMatcher(patterns.pathname)
+/**
+ * Create matching function for given url
+ *
+ * @param {string} url
+ *
+ * @returns {Function}
+ */
+export default function createURLMatcher(url) {
+  const pattern = parseURL(url)
+
+  const matchProtocol = createProtocolMatcher(pattern.protocol)
+  const matchHostname = createHostnameMatcher(pattern.hostname)
+  const matchPort = createPortMatcher(pattern.port)
+  const matchQuery = createQueryMatcher(pattern.search)
+  const matchPathname = createPathnameMatcher(pattern.pathname)
 
   return function matchRequest(req) {
-    if (matchProtocol && !matchProtocol(req.protocol)) {
+    if (!matchProtocol(req.protocol)) {
       return
     }
-    if (matchPort && !matchPort(req.port || (req.secure ? 443 : 80))) {
+    if (!matchPort(req.port)) {
       return
     }
-    if (matchHostname && !matchHostname(req.hostname)) {
+    if (!matchHostname(req.hostname)) {
       return
     }
-    if (matchQuery && !matchQuery(req.query)) {
+    if (!matchQuery(req.query)) {
       return
-    }
-    if (!matchPathname) {
-      return {}
     }
     return matchPathname(req.pathname)
   }
 }
 
+/**
+ * Matching protocol
+ */
 function createProtocolMatcher(pattern) {
+  if (!pattern) {
+    return () => true
+  }
   const accepts = pattern.toUpperCase().split('|')
   return function matchProtocol(protocol) {
     return accepts.includes(protocol.replace(/:$/, '').toUpperCase())
@@ -43,6 +54,9 @@ function createProtocolMatcher(pattern) {
  * Supports DNS wildcard
  */
 function createHostnameMatcher(pattern) {
+  if (!pattern) {
+    return () => true
+  }
   const domain = pattern.replace(/^\*(\.\*)?/, '')
   const strict = !pattern.startsWith('*.*.')
   const wildcard = pattern.startsWith('*.')
@@ -62,7 +76,13 @@ function createHostnameMatcher(pattern) {
   }
 }
 
+/**
+ * Matching port number
+ */
 function createPortMatcher(pattern) {
+  if (!pattern) {
+    return () => true
+  }
   const accepts = pattern.split('|')
   return function matchPort(target) {
     return accepts.includes(target)
@@ -78,8 +98,8 @@ function createPortMatcher(pattern) {
  * ::longParam matches any characters
  */
 function createPathnameMatcher(pattern) {
-  if (pattern == null) {
-    return () => ({})
+  if (!pattern) {
+    return () => Object.create(null)
   }
 
   const source = pattern.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/::?\w+/g, param => {
@@ -88,13 +108,12 @@ function createPathnameMatcher(pattern) {
     }
     return `(?<${param.slice(1)}>[^/]+)`
   })
-
   const regex = new RegExp(`^${source}$`)
 
   return pathname => {
     const match = pathname.match(regex)
     if (match) {
-      return match.groups
+      return match.groups || Object.create(null)
     }
   }
 }
@@ -107,6 +126,10 @@ function createPathnameMatcher(pattern) {
  * "foo" must exists, and "bar" must equals to "baz"
  */
 function createQueryMatcher(pattern) {
+  if (!pattern) {
+    return () => true
+  }
+
   const patternQuery = qs.parse(pattern.slice(1))
   const keys = Object.keys(patternQuery)
 

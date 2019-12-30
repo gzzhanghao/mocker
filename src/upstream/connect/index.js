@@ -1,6 +1,6 @@
-import * as tcpUpstream from './tcp'
 import * as httpUpstream from './http'
 import * as socksUpstream from './socks'
+import * as tcpUpstream from './tcp'
 
 export default {
   direct: tcpUpstream,

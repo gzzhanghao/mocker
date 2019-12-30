@@ -2,12 +2,16 @@ import dns from 'dns'
 import { promisify } from 'util'
 import { SocksClient } from 'socks'
 
-import { parseHost } from '../../utils'
+import { parseHost } from '@/utils'
 
 const resolve4 = promisify(dns.resolve4)
 const createConnection = promisify(SocksClient.createConnection)
 
-export async function connect(port, hostname, upstream) {
+/**
+ * @param {{ hostname: string, port: number }} options
+ * @param {{ type: 'http' | 'https' | 'proxy', host: string }} upstream
+ */
+export async function connect(options, upstream) {
   const [upstreamHostname, upstreamPort] = parseHost(upstream.host, 1080)
 
   let proxyType = 5
@@ -15,9 +19,9 @@ export async function connect(port, hostname, upstream) {
     proxyType = 4
   }
 
-  let targetHost = hostname
+  let targetHost = options.hostname
   if (upstream.type === 'socks4') {
-    [targetHost] = await resolve4(hostname)
+    [targetHost] = await resolve4(options.hostname)
   }
 
   const { socket } = await createConnection({
@@ -28,7 +32,7 @@ export async function connect(port, hostname, upstream) {
       ipaddress: upstreamHostname,
     },
     destination: {
-      port: port,
+      port: options.port,
       host: targetHost,
     },
   })

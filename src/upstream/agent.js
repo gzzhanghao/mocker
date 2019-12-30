@@ -1,21 +1,35 @@
-import tls from 'tls'
 import { Agent as HttpAgent } from 'http'
 import { Agent as HttpsAgent } from 'https'
+import tls from 'tls'
 
-import { stringifyHost } from '../utils'
+import { stringifyHost } from '@/utils'
+
+/**
+ * @typedef {import('http').RequestOptions} RequestOptions
+ * @typedef {import('@/upstream').default} Upstream
+ */
 
 export class ConnectAgent extends HttpAgent {
 
+  /**
+   * @type {Upstream}
+   */
+  upstream
+
+  /**
+   * @param {Upstream} upstream
+   */
   constructor(upstream) {
     super({ keepAlive: true })
     this.upstream = upstream
   }
 
+  /**
+   * @param {RequestOptions} options
+   * @param {Function} callback
+   */
   createConnection(options, callback) {
-    const { hostname, port } = options
-    const href = getHref(options)
-    const ua = options.headers['user-agent']
-    this.upstream.connect(port, hostname, href, ua).then(socket => {
+    connectUpstream(this.upstream, options).then(socket => {
       callback(null, socket)
     }, callback)
   }
@@ -23,16 +37,25 @@ export class ConnectAgent extends HttpAgent {
 
 export class SecureConnectAgent extends HttpsAgent {
 
+  /**
+   * @type {Upstream}
+   */
+  upstream
+
+  /**
+   * @param {Upstream} upstream
+   */
   constructor(upstream) {
     super({ keepAlive: true })
     this.upstream = upstream
   }
 
+  /**
+   * @param {RequestOptions} options
+   * @param {Function} callback
+   */
   createConnection(options, callback) {
-    const { hostname, port } = options
-    const href = getHref(options, true)
-    const ua = options.headers['user-agent']
-    this.upstream.connect(port, hostname, href, ua).then(socket => {
+    connectUpstream(this.upstream, options, true).then(socket => {
       callback(null, tls.connect({
         socket,
         servername: options.servername || options.host,
@@ -42,7 +65,13 @@ export class SecureConnectAgent extends HttpsAgent {
   }
 }
 
-function getHref(options, secure) {
+/**
+ *
+ * @param {import('@/upstream').default} upstream
+ * @param {RequestOptions} options
+ * @param {boolean} secure
+ */
+function connectUpstream(upstream, options, secure = false) {
   let href = secure ? 'https' : 'http'
   if ((options.headers['upgrade'] || '').toUpperCase() === 'WEBSOCKET') {
     href = secure ? 'wss' : 'ws'
@@ -54,7 +83,16 @@ function getHref(options, secure) {
     href += options.host
   }
   if (secure) {
-    return `${href}/`
+    href = `${href}/`
+  } else {
+    href = `${href}${options.path || '/'}`
   }
-  return `${href}${options.path || '/'}`
+  return upstream.connect({
+    port: options.port,
+    hostname: options.hostname,
+    href,
+    headers: {
+      'user-agent': options.headers['user-agent'],
+    },
+  })
 }

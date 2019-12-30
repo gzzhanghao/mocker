@@ -1,41 +1,66 @@
 import qs from 'querystring'
 import url from 'url'
 
-import { parseHost, stringifyHost } from '../utils'
+import { parseHost, stringifyHost } from '@/utils'
 
 export default class Request {
 
-  upstream = null
-
-  raw = null
-
+  /**
+   * @type {boolean}
+   */
   rejectUnauthorized = false
 
-  agent = null
+  /**
+   * @type {import('http').IncomingMessage}
+   */
+  raw
 
-  method = null
+  /**
+   * @type {string}
+   */
+  method
 
-  secure = null
+  /**
+   * @type {boolean}
+   */
+  secure
 
-  hostname = null
+  /**
+   * @type {import('http').IncomingHttpHeaders}
+   */
+  headers
 
-  port = null
+  /**
+   * @type {string}
+   */
+  hostname
 
-  pathname = null
+  /**
+   * @type {number}
+   */
+  port
 
-  search = null
+  /**
+   * @type {string}
+   */
+  pathname
 
-  headers = null
+  /**
+   * @type {string}
+   */
+  search
 
-  constructor(upstream, req) {
-    this.upstream = upstream
-    this.raw = req
+  /**
+   * @param {import('http').IncomingMessage} raw
+   */
+  constructor(raw) {
+    this.raw = raw
 
-    this.method = req.method.toUpperCase()
-    this.headers = { ...req.headers }
-    this.secure = req.socket.encrypted
-    this.host = req.headers['host'] || ''
-    this.path = req.url
+    this.method = raw.method.toUpperCase()
+    this.secure = raw.socket.encrypted
+    this.headers = { ...raw.headers }
+    this.host = raw.headers['host'] || ''
+    this.path = raw.url
   }
 
   get href() {
@@ -47,14 +72,7 @@ export default class Request {
   }
 
   set host(value) {
-    const defaultPort = this.secure ? 443 : 80
-    const [hostname, port] = parseHost(value, defaultPort)
-    this.hostname = hostname
-    if (port === defaultPort) {
-      this.port = null
-    } else {
-      this.port = port
-    }
+    [this.hostname, this.port] = parseHost(value, this.secure ? 443 : 80)
   }
 
   get path() {

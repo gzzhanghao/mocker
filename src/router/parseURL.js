@@ -1,15 +1,3 @@
-/**
- * Parse an URL with fuzzy rules
- *
- * @param   {string} url
- *
- * @returns {Object} URL descriptor
- *
- * assumptions:
- * - Protocol must have trailing slashes
- * - Pathname must have leading slash
- */
-
 const protocol = String.raw`(?<protocol>[^:/?]+:?)`
 const hostname = String.raw`(?<hostname>(\[[^\]]+\]|[^:/?]+))`
 const port     = String.raw`(?<port>[^:/?]+)`
@@ -22,10 +10,21 @@ const origin   = String.raw`(${protocol}?//${host}?)`
 
 const parser = new RegExp(`^${origin}?${path}?$`)
 
+/**
+ * Parse URL with fuzzy rules
+ *
+ * @param {string} url
+ *
+ * @returns {{ protocol?: string, hostname?: string, port?: string, pathname?: string, search?: string, path?: string }}
+ *
+ * assumptions:
+ * - Protocol must have trailing slashes
+ * - Pathname must have leading slash
+ */
 export default function parseURL(url) {
   const result = url.match(parser)
   if (result) {
     return result.groups
   }
-  throw new Error(`Malformed pattern '${url}'`)
+  throw new Error(`Malformed url '${url}'`)
 }

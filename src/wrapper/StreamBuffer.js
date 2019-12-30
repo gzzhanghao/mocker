@@ -1,15 +1,39 @@
+import { PassThrough } from 'stream'
 import zlib from 'zlib'
 import waitFor from 'event-to-promise'
-import { PassThrough } from 'stream'
 
 export default class StreamBuffer {
 
-  raw = null
+  /**
+   * @typedef {import('stream').Readable} Readable
+   */
 
+  /**
+   * @private
+   *
+   * @type {Buffer[]}
+   */
   chunks = []
 
-  onEnd = null
+  /**
+   * @private
+   *
+   * @type {Readable}
+   */
+  raw
 
+  /**
+   * @private
+   *
+   * @type {Promise<void>}
+   */
+  onEnd
+
+  /**
+   * @private
+   *
+   * @param {Readable} raw
+   */
   constructor(raw) {
     this.raw = raw
     this.onEnd = waitFor(raw, 'end')
@@ -76,8 +100,16 @@ export default class StreamBuffer {
     return raw
   }
 
+  /**
+   * @private
+   *
+   * @type {WeakMap<Readable, StreamBuffer>}
+   */
   static cache = new WeakMap()
 
+  /**
+   * @param {Readable} stream
+   */
   static get(stream) {
     if (!StreamBuffer.cache.get(stream)) {
       StreamBuffer.cache.set(stream, new StreamBuffer(stream))

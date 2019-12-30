@@ -2,8 +2,16 @@ import HTTPBody from './HTTPBody'
 
 export default class HTTPResponse {
 
-  constructor(res) {
-    this.raw = res
+  /**
+   * @type {import('http').IncomingMessage}
+   */
+  raw
+
+  /**
+   * @param {import('http').IncomingMessage} raw
+   */
+  constructor(raw) {
+    this.raw = raw
     Object.assign(this, HTTPBody)
   }
 

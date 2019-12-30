@@ -2,12 +2,15 @@ import Request from './Request'
 
 export default class UpgradeRequest extends Request {
 
-  upgrade = true
-
   accepted = false
 
-  constructor(upsteam, req, socket, head) {
-    super(upsteam, req)
+  /**
+   * @param {import('http').IncomingMessage} req
+   * @param {import('net').Socket} socket
+   * @param {Buffer} head
+   */
+  constructor(req, socket, head) {
+    super(req)
     this.socket = socket
     this.head = head
   }
@@ -31,6 +34,9 @@ export default class UpgradeRequest extends Request {
     this.secure = ['wss:', 'https:'].includes(value)
   }
 
+  /**
+   * @returns {[import('http').IncomingMessage, import('net').Socket, Buffer]}
+   */
   accept() {
     this.accepted = true
     return [this.raw, this.socket, this.head]

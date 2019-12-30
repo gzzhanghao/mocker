@@ -1,8 +1,8 @@
-import { promisify } from 'util'
-import { pki, md } from 'node-forge'
-import { randomBytes } from 'crypto'
+import crypto from 'crypto'
+import util from 'util'
+import forge from 'node-forge'
 
-const generateKeyPair = promisify(pki.rsa.generateKeyPair)
+const generateKeyPair = util.promisify(forge.pki.rsa.generateKeyPair)
 
 const CAAttrs = [
   {
@@ -127,11 +127,22 @@ const ServerExtensions = [
 ]
 
 function randomSerialNumber() {
-  return randomBytes(16).toString('hex')
+  return crypto.randomBytes(16).toString('hex')
 }
 
+/**
+ * @typedef CertificateOptions
+ * @property {forge.pki.rsa.KeyPair} keys
+ * @property {number} expires
+ * @property {any[]} subject
+ * @property {any[]} issuer
+ * @property {any[]} extensions
+ * @property {forge.pki.PrivateKey} [privateKey]
+ *
+ * @param {CertificateOptions} options
+ */
 function generateCertificate({ keys, expires, subject, issuer, extensions, privateKey }) {
-  const cert = pki.createCertificate()
+  const cert = forge.pki.createCertificate()
 
   cert.publicKey = keys.publicKey
   cert.serialNumber = randomSerialNumber()
@@ -143,18 +154,17 @@ function generateCertificate({ keys, expires, subject, issuer, extensions, priva
   cert.setIssuer(issuer)
   cert.setExtensions(extensions)
 
-  cert.sign(privateKey || keys.privateKey, md.sha256.create())
+  cert.sign(privateKey || keys.privateKey, forge.md.sha256.create())
 
   return {
-    cert: pki.certificateToPem(cert),
-    key: pki.privateKeyToPem(keys.privateKey),
+    cert: forge.pki.certificateToPem(cert),
+    key: forge.pki.privateKeyToPem(keys.privateKey),
   }
 }
 
 export function generateRootCAKey() {
   return generateCertificate({
-    keys: pki.rsa.generateKeyPairSync(2048),
-    keyLen: 2048,
+    keys: forge.pki.rsa.generateKeyPairSync(2048),
     expires: 2,
     subject: CAAttrs,
     issuer: CAAttrs,
@@ -162,16 +172,20 @@ export function generateRootCAKey() {
   })
 }
 
+/**
+ * @param {{ key: string, cert: string }} ca
+ * @param {string[]} hosts
+ */
 export async function generateHostKey(ca, hosts) {
   return generateCertificate({
     keys: await generateKeyPair(2048),
     expires: 2,
     subject: [{ name: 'commonName', value: hosts[0] }].concat(ServerAttrs),
-    issuer: pki.certificateFromPem(ca.cert).issuer.attributes,
+    issuer: forge.pki.certificateFromPem(ca.cert).issuer.attributes,
     extensions: ServerExtensions.concat([{
       name: 'subjectAltName',
       altNames: hosts.map(host => ({ type: 2, value: host })),
     }]),
-    privateKey: pki.privateKeyFromPem(ca.key),
+    privateKey: forge.pki.privateKeyFromPem(ca.key),
   })
 }
